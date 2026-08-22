@@ -1,6 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { get } from "./helpers/api.js";
-import type { ListEnvelope, MenuCategory } from "./helpers/types.js";
+import { get, readJson, type ListEnvelope, type MenuCategory } from "./setup.js";
 
 describe("GET /menu/categories", () => {
   let response: Response;
@@ -8,7 +7,7 @@ describe("GET /menu/categories", () => {
 
   beforeAll(async () => {
     response = await get("/menu/categories");
-    body = await response.json();
+    body = await readJson(response);
   });
 
   it("responds 200", () => {

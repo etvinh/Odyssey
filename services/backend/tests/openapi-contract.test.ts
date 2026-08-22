@@ -1,6 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { get } from "./helpers/api.js";
-import type { OpenApiDocument } from "./helpers/types.js";
+import { get, readJson, type OpenApiDocument } from "./setup.js";
 
 /**
  * packages/api-client is generated from this document, so every type the
@@ -12,7 +11,7 @@ describe("OpenAPI document", () => {
   let doc: OpenApiDocument;
 
   beforeAll(async () => {
-    doc = await (await get("/openapi.json")).json();
+    doc = await readJson(await get("/openapi.json"));
   });
 
   it("documents the menu categories read", () => {
