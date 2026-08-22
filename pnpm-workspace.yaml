@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - services/*
+  - packages/*
+
+# Build scripts we explicitly allow. workerd ships the Workers runtime binary;
+# esbuild backs tsx, drizzle-kit and wrangler. Both need their postinstall.
+# @scarf/scarf is install analytics with no functional role — denied.
+allowBuilds:
+  esbuild: true
+  workerd: true
+  "@scarf/scarf": false

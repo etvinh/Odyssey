@@ -1,0 +1,7 @@
+name = "odyssey-backend"
+main = "src/index.ts"
+compatibility_date = "2025-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 8787

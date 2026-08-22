@@ -1,0 +1,24 @@
+{
+  "name": "odyssey",
+  "private": true,
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:backend": "pnpm --filter @odyssey/backend dev",
+    "dev:dashboard": "pnpm --filter @odyssey/dashboard dev",
+    "gen:contract": "turbo run gen:contract",
+    "db:migrate": "pnpm --filter @odyssey/backend db:migrate",
+    "db:generate": "pnpm --filter @odyssey/backend db:generate",
+    "seed": "pnpm --filter @odyssey/backend seed",
+    "seed:reset": "pnpm --filter @odyssey/backend seed:reset",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.5",
+    "typescript": "^5.7.3"
+  }
+}
