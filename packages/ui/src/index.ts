@@ -14,5 +14,6 @@ export * from "./inputs";
 export * from "./Select";
 export * from "./states";
 export * from "./overlays";
+export * from "./SaveBar";
 export * from "./Toast";
 export * from "./AppShell";

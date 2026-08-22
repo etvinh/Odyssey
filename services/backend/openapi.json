@@ -710,6 +710,95 @@
             ]
           }
         ]
+      },
+      "Settings": {
+        "type": "object",
+        "properties": {
+          "isAcceptingOrders": {
+            "type": "boolean"
+          },
+          "isAutoAccepting": {
+            "type": "boolean"
+          },
+          "prepTimeMinutes": {
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "openingHours": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpeningHoursEntry"
+            }
+          }
+        },
+        "required": [
+          "isAcceptingOrders",
+          "isAutoAccepting",
+          "prepTimeMinutes",
+          "openingHours"
+        ]
+      },
+      "OpeningHoursEntry": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "$ref": "#/components/schemas/DayOfWeek"
+          },
+          "opensAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-2]\\d:[0-5]\\d$"
+          },
+          "closesAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-2]\\d:[0-5]\\d$"
+          }
+        },
+        "required": [
+          "day",
+          "opensAt",
+          "closesAt"
+        ]
+      },
+      "DayOfWeek": {
+        "type": "string",
+        "enum": [
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday",
+          "sunday"
+        ]
+      },
+      "UpdateSettingsBody": {
+        "type": "object",
+        "properties": {
+          "isAcceptingOrders": {
+            "type": "boolean"
+          },
+          "isAutoAccepting": {
+            "type": "boolean"
+          },
+          "prepTimeMinutes": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 120
+          },
+          "openingHours": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpeningHoursEntry"
+            }
+          }
+        }
       }
     },
     "parameters": {}
@@ -1443,6 +1532,64 @@
           },
           "422": {
             "description": "The id was not a uuid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings": {
+      "get": {
+        "operationId": "getSettings",
+        "tags": [
+          "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "The service settings, with the full week of opening hours.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateSettings",
+        "tags": [
+          "Settings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingsBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The settings after the change, whole rather than partial.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The body did not validate.",
             "content": {
               "application/json": {
                 "schema": {

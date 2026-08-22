@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { menuRoutes } from "./routes/menu.js";
 import { orderRoutes } from "./routes/orders.js";
 import { customerRoutes } from "./routes/customers.js";
+import { settingsRoutes } from "./routes/settings.js";
 import { ApiException } from "./schemas/error.js";
 import { createDb as realCreateDb, type DbFactory } from "./db/client.js";
 import type { AppEnv } from "./env.js";
@@ -76,6 +77,7 @@ export function createApp(options: { createDb?: DbFactory } = {}) {
   app.route("/api/v1", menuRoutes);
   app.route("/api/v1", orderRoutes);
   app.route("/api/v1", customerRoutes);
+  app.route("/api/v1", settingsRoutes);
 
   app.doc31("/api/v1/openapi.json", {
     openapi: "3.1.0",

@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
-import { ORDER_CHANNELS, type OrderStatus } from "@odyssey/types";
+import { DAYS_OF_WEEK, ORDER_CHANNELS, type OrderStatus } from "@odyssey/types";
 import {
   customers,
   menuCategories,
@@ -9,6 +9,7 @@ import {
   orderEvents,
   orderItems,
   orders,
+  openingHours,
   settings,
 } from "../src/db/schema.js";
 
@@ -175,7 +176,8 @@ if (reset) {
 
 await sql`
   TRUNCATE TABLE
-    order_events, order_items, orders, customers, menu_items, menu_categories, settings
+    order_events, order_items, orders, customers, menu_items, menu_categories, settings,
+    opening_hours
   RESTART IDENTITY CASCADE
 `;
 // RESTART IDENTITY does not touch a standalone sequence, so order numbers would
@@ -203,6 +205,18 @@ await db.insert(settings).values({
   isAutoAccepting: false,
   prepTimeMinutes: 20,
 });
+
+/**
+ * Lunch is not modelled separately — one interval per day is the scope cut, so
+ * these run straight through. Closed Monday, the way a lot of kitchens are.
+ */
+await db.insert(openingHours).values(
+  DAYS_OF_WEEK.map((day) => ({
+    day,
+    opensAt: day === "monday" ? null : "11:30",
+    closesAt: day === "monday" ? null : day === "friday" || day === "saturday" ? "23:00" : "22:00",
+  })),
+);
 
 const customerRows = await db
   .insert(customers)

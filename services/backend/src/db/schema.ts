@@ -12,7 +12,7 @@ import {
   check,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { ORDER_CHANNELS, ORDER_STATUSES } from "@odyssey/types";
+import { DAYS_OF_WEEK, ORDER_CHANNELS, ORDER_STATUSES } from "@odyssey/types";
 
 /**
  * Every table in Odyssey. One flat file: the schema is the source of truth for
@@ -24,6 +24,7 @@ import { ORDER_CHANNELS, ORDER_STATUSES } from "@odyssey/types";
 
 export const orderStatusEnum = pgEnum("order_status", ORDER_STATUSES);
 export const orderChannelEnum = pgEnum("order_channel", ORDER_CHANNELS);
+export const dayOfWeekEnum = pgEnum("day_of_week", DAYS_OF_WEEK);
 
 /**
  * Order numbers are human-facing and start at 1000, so the first order is
@@ -112,6 +113,40 @@ export const settings = pgTable(
     // convention. There is exactly one settings row, forever.
     check("settings_singleton_check", sql`${t.id} = 1`),
     check("settings_prep_time_check", sql`${t.prepTimeMinutes} between 5 and 120`),
+  ],
+);
+
+/**
+ * When the restaurant is open, as one interval per day.
+ *
+ * A row per day rather than a JSON blob on `settings`, so the "opens before it
+ * closes" rule is a database check rather than a convention. Exactly seven rows,
+ * forever — a day with no interval is closed, which is why the times are
+ * nullable rather than the row being absent.
+ *
+ * Times are "HH:MM" text, zero-padded, which makes the `<` check below a
+ * correct comparison. No timezone is modelled anywhere in this build: the
+ * comparison against a wall clock is server-local. See PRODUCT.md's tradeoffs.
+ */
+export const openingHours = pgTable(
+  "opening_hours",
+  {
+    day: dayOfWeekEnum("day").primaryKey(),
+    opensAt: text("opens_at"),
+    closesAt: text("closes_at"),
+  },
+  (t) => [
+    // Both set or both null. A day with one half of an interval is not a
+    // representable state, so it is rejected rather than interpreted.
+    check(
+      "opening_hours_pair_check",
+      sql`(${t.opensAt} is null) = (${t.closesAt} is null)`,
+    ),
+    check("opening_hours_opens_format_check", sql`${t.opensAt} is null or ${t.opensAt} ~ '^[0-2][0-9]:[0-5][0-9]$'`),
+    check("opening_hours_closes_format_check", sql`${t.closesAt} is null or ${t.closesAt} ~ '^[0-2][0-9]:[0-5][0-9]$'`),
+    // Cross-midnight service (18:00-01:00) is unrepresentable by design — an
+    // accepted scope cut, not an oversight. See PRODUCT.md.
+    check("opening_hours_order_check", sql`${t.opensAt} is null or ${t.opensAt} < ${t.closesAt}`),
   ],
 );
 

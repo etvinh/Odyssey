@@ -40,8 +40,10 @@ import type {
   OrderActionBody,
   OrderDetail,
   OrderList,
+  Settings,
   UpdateMenuCategoryBody,
-  UpdateMenuItemBody
+  UpdateMenuItemBody,
+  UpdateSettingsBody
 } from './model';
 
 import { apiFetch } from '../fetcher';
@@ -1473,3 +1475,199 @@ export function useGetCustomer<TData = Awaited<ReturnType<typeof getCustomer>>, 
 
   return query;
 }
+
+
+
+
+
+export type getSettingsResponse200 = {
+  data: Settings
+  status: 200
+}
+    
+export type getSettingsResponseSuccess = (getSettingsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getSettingsResponse = (getSettingsResponseSuccess)
+
+export const getGetSettingsUrl = () => {
+
+
+  
+
+  return `/api/v1/settings`
+}
+
+export const getSettings = async ( options?: RequestInit): Promise<getSettingsResponse> => {
+  
+  return apiFetch<getSettingsResponse>(getGetSettingsUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getGetSettingsQueryKey = () => {
+    return [
+    `/api/v1/settings`
+    ] as const;
+    }
+
+    
+export const getGetSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getSettings>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSettingsQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSettings>>> = ({ signal }) => getSettings({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getSettings>>>
+export type GetSettingsQueryError = unknown
+
+
+export function useGetSettings<TData = Awaited<ReturnType<typeof getSettings>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSettings<TData = Awaited<ReturnType<typeof getSettings>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSettings<TData = Awaited<ReturnType<typeof getSettings>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetSettings<TData = Awaited<ReturnType<typeof getSettings>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+export type updateSettingsResponse200 = {
+  data: Settings
+  status: 200
+}
+
+export type updateSettingsResponse422 = {
+  data: ApiErrorBody
+  status: 422
+}
+    
+export type updateSettingsResponseSuccess = (updateSettingsResponse200) & {
+  headers: Headers;
+};
+export type updateSettingsResponseError = (updateSettingsResponse422) & {
+  headers: Headers;
+};
+
+export type updateSettingsResponse = (updateSettingsResponseSuccess | updateSettingsResponseError)
+
+export const getUpdateSettingsUrl = () => {
+
+
+  
+
+  return `/api/v1/settings`
+}
+
+export const updateSettings = async (updateSettingsBody: UpdateSettingsBody, options?: RequestInit): Promise<updateSettingsResponse> => {
+  
+  return apiFetch<updateSettingsResponse>(getUpdateSettingsUrl(),
+  {      
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateSettingsBody,)
+  }
+);}
+
+
+
+
+export const getUpdateSettingsMutationOptions = <TError = ApiErrorBody,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSettings>>, TError,{data: UpdateSettingsBody}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSettings>>, TError,{data: UpdateSettingsBody}, TContext> => {
+
+const mutationKey = ['updateSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSettings>>, {data: UpdateSettingsBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateSettings(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateSettings>>>
+    export type UpdateSettingsMutationBody = UpdateSettingsBody
+    export type UpdateSettingsMutationError = ApiErrorBody
+
+    export const useUpdateSettings = <TError = ApiErrorBody,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSettings>>, TError,{data: UpdateSettingsBody}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateSettings>>,
+        TError,
+        {data: UpdateSettingsBody},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateSettingsMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
