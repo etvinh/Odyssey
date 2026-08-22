@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { errorMessage, useListOrders, type OrderRow } from "@odyssey/api-client";
 import { ORDER_STATUSES, type OrderStatus } from "@odyssey/types";
 import {
+  Button,
   DataTable,
   EmptyState,
   ErrorState,
@@ -18,11 +19,13 @@ import {
 } from "@odyssey/ui";
 import { formatMoney, formatTime } from "../../format";
 import { channelLabel, statusLabel, statusTone } from "./format";
+import { OrderCreateDialog } from "./OrderCreateDialog";
 
 export function OrdersList() {
   const router = useRouter();
   const [status, setStatus] = useState<OrderStatus | "all">("all");
   const [search, setSearch] = useState("");
+  const [creating, setCreating] = useState(false);
 
   // Not destructured: TanStack Query v5 narrows `data` through the result
   // object's discriminated union, and destructuring throws that away.
@@ -40,7 +43,12 @@ export function OrdersList() {
       <PageHeader
         title="Orders"
         subtitle={page ? `${page.data.length} of ${page.meta.total} shown` : undefined}
+        actions={
+          <Button label="New order" icon="plus" variant="primary" onPress={() => setCreating(true)} />
+        }
       />
+
+      <OrderCreateDialog open={creating} onClose={() => setCreating(false)} />
 
       <View style={{ gap: space[4] }}>
         <View style={{ flexDirection: "row", gap: space[3], flexWrap: "wrap", alignItems: "center" }}>

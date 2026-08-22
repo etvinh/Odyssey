@@ -11,6 +11,7 @@ export * from "./StatusBadge";
 export * from "./SegmentedControl";
 export * from "./DataTable";
 export * from "./inputs";
+export * from "./Select";
 export * from "./states";
 export * from "./overlays";
 export * from "./Toast";
