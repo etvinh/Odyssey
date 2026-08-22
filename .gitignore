@@ -65,10 +65,14 @@ CLAUDE.local.md
 # ---------------------------------------------------------------------------
 # Documentation
 # ---------------------------------------------------------------------------
-# Only README.md ships. Everything else — ADRs, the glossary, agent
+# README.md and the ADRs ship. Everything else — the glossary, agent
 # instructions and the planning docs — stays local.
+#
+# The ADRs are in because README.md links to them: a reviewer following those
+# links to a 404 is worse than not offering them.
 *.md
 !README.md
+!docs/adr/*.md
 
 # ---------------------------------------------------------------------------
 # Editor and OS
