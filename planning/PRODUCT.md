@@ -74,7 +74,7 @@ No market claims, competitor comparisons, customer counts, or pricing may be inv
 - **History integrity:** order items snapshot item name and unit price at creation, so later menu edits never rewrite past orders. Menu items are soft-deleted for the same reason.
 - **Walk-ins:** an order's customer may be `null`. Attaching a customer is optional, and a new customer can be created inline from the order flow rather than dead-ending it. There is no standalone customer-create endpoint — `POST /orders` takes a `customer` union and inserts the new customer in the same transaction, so a rejected order cannot strand a customer with no orders.
 - **Service status:** open/closed is derived from `isAcceptingOrders` plus the current time against `openingHours`, in a shared util so the backend and the header pill cannot disagree.
-- **Repo conventions:** issues and specs live as local markdown under `.scratch/<feature-slug>/`; the domain glossary is `../CONTEXT.md` at the root with ADRs under `../docs/adr/`. Five canonical triage labels. See `../CLAUDE.md` and `../docs/agents/`.
+- **Repo conventions:** issues and specs live as local markdown under `.scratch/<feature-slug>/`; the domain glossary is `../CONTEXT.md` at the root with ADRs under `../docs/adr/`. Five canonical triage labels. See `../CLAUDE.md`.
 
 ## Capabilities and Constraints
 
@@ -121,7 +121,7 @@ Name: **Odyssey**. No logo, wordmark, palette, or voice guide exists or is inher
 - `COMPONENTS.md` — the component inventory: RN-based primitives and per-page compositions.
 - `../CONTEXT.md` — domain glossary.
 - `../docs/adr/` — the four architecture decision records.
-- `../CLAUDE.md`, `../docs/agents/` — agent workflow conventions.
+- `../CLAUDE.md` — agent workflow conventions.
 
 **Absent — must not be fabricated:** no real restaurant, no users, no testimonials, no metrics, no pricing, no deployment. Seed data is synthetic and labelled as such.
 

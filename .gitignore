@@ -24,3 +24,6 @@ coverage/
 # The assignment brief. Kept locally, never committed — it is the client's
 # material, not ours to publish.
 INSTRUCTIONS.md
+
+# Agent tooling conventions — local working config, not part of the deliverable.
+docs/agents/

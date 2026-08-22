@@ -9,16 +9,11 @@ Planning artifacts — the schema sketch, REST contract and component inventory 
 `planning/`; they are design input, not the source of truth. The Drizzle schema, the
 generated OpenAPI document and the `/ui-library` route are.
 
-## Agent skills
+## Conventions
 
-### Issue tracker
-
-Issues and specs live as local markdown files under `.scratch/<feature-slug>/`. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-The five canonical triage roles, each label string equal to its name. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+- **Issues and specs** live as local markdown under `.scratch/<feature-slug>/`, one directory per
+  feature, with the spec at `spec.md` and numbered tickets under `issues/`. Not committed.
+- **Domain docs** are single-context: one `CONTEXT.md` glossary at the root, ADRs in `docs/adr/`.
+  Use the glossary's vocabulary; flag anything that contradicts an existing ADR rather than
+  silently overriding it.
+- **Triage labels**: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`.
