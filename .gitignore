@@ -1,29 +1,77 @@
+# ---------------------------------------------------------------------------
+# Dependencies and build output
+# ---------------------------------------------------------------------------
 node_modules/
-.turbo/
+.pnpm-store/
 dist/
-.expo/
-.wrangler/
+build/
 coverage/
-*.log
-.DS_Store
+*.tgz
 
-# Local secrets. Copy services/backend/.env.example to .env.
-# .dev.vars is wrangler's default secrets filename — we don't use it, but an
-# unignored one is a credentials file waiting for `git add -A`.
+# Tool caches
+.turbo/
+.expo/
+.expo-shared/
+.wrangler/
+.eslintcache
+*.tsbuildinfo
+
+# NOTE: packages/api-client/src/generated/ and services/backend/openapi.json are
+# COMMITTED on purpose — the generated contract should be readable on GitHub
+# without cloning. See docs/adr/0004.
+
+# ---------------------------------------------------------------------------
+# Secrets. Nothing here should ever reach the remote.
+# ---------------------------------------------------------------------------
+# Real values live in .env; the committed template is .env.example.
 .env
 .env.*
 !.env.example
+
+# wrangler's default secrets filename. We use .env instead, but an unignored
+# .dev.vars is a credentials file waiting for `git add -A`.
 .dev.vars
 .dev.vars.*
 
-# Issues and specs — local working notes, per CLAUDE.md.
-.scratch/
+# Key material, in case any ever lands in the tree.
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa*
+id_ed25519*
 
-# packages/api-client generated output is COMMITTED on purpose — see ADR-0004.
-
-# The assignment brief. Kept locally, never committed — it is the client's
-# material, not ours to publish.
+# ---------------------------------------------------------------------------
+# Not ours to publish / not part of the deliverable
+# ---------------------------------------------------------------------------
+# The assignment brief — the client's material. Kept locally, never committed.
 INSTRUCTIONS.md
 
-# Agent tooling conventions — local working config, not part of the deliverable.
+# Agent tooling conventions and local assistant state.
 docs/agents/
+.claude/
+CLAUDE.local.md
+
+# Issues, specs and working notes.
+.scratch/
+
+# ---------------------------------------------------------------------------
+# Editor and OS
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+.AppleDouble
+Thumbs.db
+
+# ---------------------------------------------------------------------------
+# Local scratch: logs, backups, merge and history-rewrite leftovers
+# ---------------------------------------------------------------------------
+*.log
+*.bak
+*.orig
+*.rej
+.git-rewrite/
