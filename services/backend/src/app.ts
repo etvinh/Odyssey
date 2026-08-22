@@ -1,5 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
+import { swaggerUI } from "@hono/swagger-ui";
 import { menuRoutes } from "./routes/menu.js";
 import { orderRoutes } from "./routes/orders.js";
 import { customerRoutes } from "./routes/customers.js";
@@ -88,6 +89,13 @@ export function createApp(options: { createDb?: DbFactory } = {}) {
     // the prefix here too makes generated clients request it twice.
     servers: [{ url: "http://localhost:8787" }],
   });
+
+  /**
+   * A browsable read of the document above, so the contract can be exercised
+   * without curl. Outside /api/v1 because it is not part of the API — nothing
+   * generated from the OpenAPI document knows this route exists.
+   */
+  app.get("/docs", swaggerUI({ url: "/api/v1/openapi.json" }));
 
   return app;
 }

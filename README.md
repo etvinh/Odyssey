@@ -32,11 +32,8 @@ pnpm dev:backend              # Hono on workerd  → http://localhost:8787
 pnpm dev:dashboard            # Expo web         → http://localhost:8081
 ```
 
-### Verify
-
-```bash
-curl http://localhost:8787/api/v1/menu/categories
-```
+The dashboard is on **8081**. The API serves JSON only; browse and exercise it at
+**http://localhost:8787/docs**, generated from the same OpenAPI document Orval consumes.
 
 ### Other commands
 
