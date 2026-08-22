@@ -3,12 +3,20 @@ node_modules/
 dist/
 .expo/
 .wrangler/
+coverage/
 *.log
 .DS_Store
-.env
-.env.local
 
-# packages/api-client generated output is COMMITTED on purpose — see ADR-0004
-
-# local secrets — copy services/backend/.env.example to .env
+# Local secrets. Copy services/backend/.env.example to .env.
+# .dev.vars is wrangler's default secrets filename — we don't use it, but an
+# unignored one is a credentials file waiting for `git add -A`.
 .env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+
+# Issues and specs — local working notes, per CLAUDE.md.
+.scratch/
+
+# packages/api-client generated output is COMMITTED on purpose — see ADR-0004.

@@ -52,7 +52,15 @@ export const menuRoutes = new OpenAPIHono<{ Bindings: Env }>().openapi(
         200,
       );
     } finally {
-      c.executionCtx.waitUntil(sql.end());
+      // Hono's executionCtx getter throws when the app is invoked without
+      // one (app.request with no ctx, a Node adapter), which would turn a
+      // good response into a 500 and mask the real error.
+      const close = sql.end();
+      try {
+        c.executionCtx.waitUntil(close);
+      } catch {
+        await close;
+      }
     }
   },
 );

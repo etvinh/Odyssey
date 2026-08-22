@@ -50,9 +50,3 @@ export type MenuCategory = {
   sortOrder: number;
   itemCount: number;
 };
-
-export type OpenApiDocument = {
-  paths: Record<string, unknown>;
-  servers: { url: string }[];
-  components: { schemas: Record<string, any> };
-};
