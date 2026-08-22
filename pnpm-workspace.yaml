@@ -10,3 +10,11 @@ allowBuilds:
   esbuild: true
   workerd: true
   "@scarf/scarf": false
+
+# React context is per module instance. Two copies of react mean two copies of
+# @tanstack/react-query, and a QueryClientProvider in the app becomes invisible
+# to hooks in packages/api-client. Pin to the version Expo SDK 57 expects so
+# the whole workspace shares one copy.
+overrides:
+  react: 19.2.3
+  react-dom: 19.2.3
