@@ -47,7 +47,8 @@ export default tseslint.config(
     rules: {
       // Drizzle's query builders are lazy thenables, not Promises, so the
       // rule's default (checkThenables: false) lets an unawaited mutation
-      // through silently — the exact case ADR-0005 cites for the swap.
+      // through silently, which is exactly the mistake worth catching in an
+      // order-action handler.
       "@typescript-eslint/no-floating-promises": ["error", { checkThenables: true }],
     },
   },

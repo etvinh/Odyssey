@@ -24,7 +24,7 @@ apps/dashboard/.gitignore
 
 # NOTE: packages/api-client/src/generated/ and services/backend/openapi.json are
 # COMMITTED on purpose — the generated contract should be readable on GitHub
-# without cloning. See docs/adr/0004.
+# without cloning.
 
 # ---------------------------------------------------------------------------
 # Secrets. Nothing here should ever reach the remote.
@@ -61,6 +61,14 @@ CLAUDE.local.md
 
 # Issues, specs and working notes.
 .scratch/
+
+# ---------------------------------------------------------------------------
+# Documentation
+# ---------------------------------------------------------------------------
+# Only README.md ships. Everything else — ADRs, the glossary, agent
+# instructions and the planning docs — stays local.
+*.md
+!README.md
 
 # ---------------------------------------------------------------------------
 # Editor and OS

@@ -5,7 +5,7 @@ import * as schema from "./schema.js";
 /**
  * One driver, two runtimes. postgres.js speaks TCP in Node and reaches
  * cloudflare:sockets inside workerd, so migrations, the seed script and the
- * Worker all share this module. See docs/adr/0001.
+ * Worker all share this module.
  *
  * A Worker must not hold a connection across requests, so this is called per
  * request rather than memoised at module scope.

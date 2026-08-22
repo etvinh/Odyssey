@@ -11,7 +11,7 @@
  *     invalidating every cache entry.
  */
 
-/** The error envelope every non-2xx response carries. See planning/API.md. */
+/** The error envelope every non-2xx response carries. */
 export type ApiErrorBody = {
   error: { code: string; message: string; fields?: Record<string, string> };
 };

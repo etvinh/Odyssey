@@ -2,7 +2,8 @@ import { pgTable, uuid, text, integer, timestamp, uniqueIndex } from "drizzle-or
 
 /**
  * Stage 0 walking skeleton: one table only.
- * The rest of planning/DATABASE.md lands in Stage 1.
+ * The remaining tables — menu items, customers, orders and settings —
+ * land in Stage 1.
  */
 export const menuCategories = pgTable(
   "menu_categories",
