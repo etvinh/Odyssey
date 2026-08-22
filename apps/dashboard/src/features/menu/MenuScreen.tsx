@@ -1,140 +1,228 @@
 import { useState } from "react";
-import { Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
-import { Link } from "expo-router";
+import { View } from "react-native";
 import { errorMessage, type MenuCategory, type MenuItem } from "@odyssey/api-client";
+import {
+  Button,
+  ConfirmDialog,
+  DataTable,
+  EmptyState,
+  ErrorState,
+  IconButton,
+  InlineAlert,
+  PageHeader,
+  SearchField,
+  Section,
+  SkeletonRows,
+  StatusBadge,
+  Switch,
+  Surface,
+  Text,
+  TextInput,
+  space,
+  useToast,
+} from "@odyssey/ui";
 import { formatMoney } from "../../format";
 import { useMenu } from "./useMenu";
-import { MenuItemForm, type ItemDraft } from "./MenuItemForm";
+import { MenuItemDialog, type ItemDraft } from "./MenuItemDialog";
 
-/**
- * Stage 0 idiom: React Native primitives and inline styles, matching the orders
- * screens. The design system lands in packages/ui later.
- */
+type Editing =
+  | { kind: "new"; categoryId: string }
+  | { kind: "edit"; item: MenuItem }
+  | null;
+
 export function MenuScreen() {
   const menu = useMenu();
+  const toast = useToast();
   const [search, setSearch] = useState("");
-  /** Which inline form is open. Only ever one at a time. */
-  const [editing, setEditing] = useState<
-    { kind: "new"; categoryId: string } | { kind: "edit"; item: MenuItem } | null
-  >(null);
-  const [newCategory, setNewCategory] = useState("");
+  const [editing, setEditing] = useState<Editing>(null);
+  const [removing, setRemoving] = useState<MenuItem | null>(null);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [categoryName, setCategoryName] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
-
-  if (menu.isPending) return <Text style={{ padding: 24 }}>Loading…</Text>;
-
-  if (menu.isError) {
-    return (
-      <View style={{ padding: 24, gap: 8 }}>
-        <Text style={{ color: "#b91c1c" }}>{errorMessage(menu.error)}</Text>
-        <Pressable onPress={menu.retry}>
-          <Text style={{ color: "#2563eb" }}>Retry</Text>
-        </Pressable>
-      </View>
-    );
-  }
 
   const categories = menu.categories ?? [];
   const items = menu.items ?? [];
   const needle = search.trim().toLowerCase();
-  const visible = needle
-    ? items.filter((item) => item.name.toLowerCase().includes(needle))
-    : items;
+  const visible = needle ? items.filter((item) => item.name.toLowerCase().includes(needle)) : items;
+
+  const createCategory = () => {
+    menu.createCategory.mutate(
+      { data: { name: categoryName.trim() } },
+      {
+        onSuccess: () => {
+          toast(`${categoryName.trim()} added`);
+          setCategoryName("");
+          setAddingCategory(false);
+        },
+        onError: (error) => setNotice(errorMessage(error)),
+      },
+    );
+  };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <Text style={{ fontSize: 22, fontWeight: "600" }}>Menu</Text>
-        <Link href="/orders" style={{ color: "#2563eb" }}>
-          Orders
-        </Link>
-      </View>
-
-      <TextInput
-        value={search}
-        onChangeText={setSearch}
-        placeholder="Search items by name"
-        style={{
-          borderWidth: 1,
-          borderColor: "#d4d4d8",
-          borderRadius: 6,
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-        }}
+    <View>
+      <PageHeader
+        title="Menu"
+        subtitle={
+          menu.items ? `${items.length} items across ${categories.length} categories` : undefined
+        }
+        actions={
+          <Button
+            label="New category"
+            icon="plus"
+            variant="secondary"
+            onPress={() => setAddingCategory(true)}
+          />
+        }
       />
 
-      {/* Refusals the server owns — CATEGORY_NOT_EMPTY above all — surface here. */}
-      {notice ? (
-        <View
-          style={{
-            borderWidth: 1,
-            borderColor: "#fca5a5",
-            backgroundColor: "#fef2f2",
-            borderRadius: 6,
-            padding: 10,
-            flexDirection: "row",
-            justifyContent: "space-between",
-            gap: 12,
-          }}
-        >
-          <Text style={{ color: "#b91c1c", flex: 1 }}>{notice}</Text>
-          <Pressable onPress={() => setNotice(null)}>
-            <Text style={{ color: "#b91c1c" }}>Dismiss</Text>
-          </Pressable>
-        </View>
-      ) : null}
+      <View style={{ gap: space[4] }}>
+        {notice ? (
+          <InlineAlert tone="danger" message={notice} onDismiss={() => setNotice(null)} />
+        ) : null}
 
-      <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-        <TextInput
-          value={newCategory}
-          onChangeText={setNewCategory}
-          placeholder="New category name"
-          style={{
-            borderWidth: 1,
-            borderColor: "#d4d4d8",
-            borderRadius: 6,
-            paddingHorizontal: 10,
-            paddingVertical: 7,
-            flex: 1,
-            maxWidth: 280,
-          }}
+        <SearchField
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search items by name"
+          width={320}
         />
-        <Pressable
-          disabled={newCategory.trim() === "" || menu.createCategory.isPending}
-          onPress={() => {
-            menu.createCategory.mutate(
-              { data: { name: newCategory.trim() } },
-              {
-                onSuccess: () => setNewCategory(""),
-                onError: (error) => setNotice(errorMessage(error)),
-              },
-            );
-          }}
-          style={{
-            paddingHorizontal: 14,
-            paddingVertical: 8,
-            borderRadius: 6,
-            borderWidth: 1,
-            borderColor: "#2563eb",
-            opacity: newCategory.trim() === "" ? 0.4 : 1,
-          }}
-        >
-          <Text style={{ color: "#2563eb" }}>Add category</Text>
-        </Pressable>
+
+        {addingCategory ? (
+          <Surface>
+            <View style={{ flexDirection: "row", gap: space[2], alignItems: "flex-end" }}>
+              <View style={{ flex: 1, maxWidth: 320 }}>
+                <TextInput
+                  value={categoryName}
+                  onChangeText={setCategoryName}
+                  placeholder="Aperitivo"
+                  accessibilityLabel="New category name"
+                  onSubmitEditing={() => categoryName.trim() && createCategory()}
+                />
+              </View>
+              <Button
+                label="Add"
+                variant="primary"
+                onPress={createCategory}
+                disabled={categoryName.trim() === ""}
+                loading={menu.createCategory.isPending}
+              />
+              <Button
+                label="Cancel"
+                variant="ghost"
+                onPress={() => {
+                  setAddingCategory(false);
+                  setCategoryName("");
+                }}
+              />
+            </View>
+          </Surface>
+        ) : null}
+
+        {menu.isPending ? (
+          <Surface>
+            <SkeletonRows rows={8} />
+          </Surface>
+        ) : menu.isError ? (
+          <Surface padded={false}>
+            <ErrorState cause={errorMessage(menu.error)} onRetry={menu.retry} />
+          </Surface>
+        ) : categories.length === 0 ? (
+          <Surface padded={false}>
+            <EmptyState
+              title="Nothing on the menu yet"
+              body="Add a category first, then the items that belong in it."
+              action={{ label: "New category", onPress: () => setAddingCategory(true) }}
+            />
+          </Surface>
+        ) : (
+          <View style={{ gap: space[8] }}>
+            {categories.map((category) => (
+              <CategorySection
+                key={category.id}
+                category={category}
+                items={visible.filter((item) => item.categoryId === category.id)}
+                isFiltered={needle !== ""}
+                menu={menu}
+                onAdd={() => setEditing({ kind: "new", categoryId: category.id })}
+                onEdit={(item) => setEditing({ kind: "edit", item })}
+                onRemove={setRemoving}
+                onNotice={setNotice}
+              />
+            ))}
+          </View>
+        )}
       </View>
 
-      {categories.map((category) => (
-        <CategorySection
-          key={category.id}
-          category={category}
-          items={visible.filter((item) => item.categoryId === category.id)}
-          isFiltered={needle !== ""}
-          editing={editing}
-          setEditing={setEditing}
-          setNotice={setNotice}
-          menu={menu}
+      {editing ? (
+        <MenuItemDialog
+          open
+          // Remounts per target, so the fields open with the right values.
+          key={editing.kind === "edit" ? editing.item.id : `new-${editing.categoryId}`}
+          initial={editing.kind === "edit" ? editing.item : undefined}
+          isSaving={menu.createItem.isPending || menu.updateItem.isPending}
+          error={editing.kind === "edit" ? menu.updateItem.error : menu.createItem.error}
+          onClose={() => setEditing(null)}
+          onSubmit={(draft) => {
+            if (editing.kind === "edit") {
+              menu.updateItem.mutate(
+                { id: editing.item.id, data: changedFields(editing.item, draft) },
+                {
+                  onSuccess: () => {
+                    toast(`${draft.name} saved`);
+                    setEditing(null);
+                  },
+                },
+              );
+            } else {
+              menu.createItem.mutate(
+                {
+                  data: {
+                    categoryId: editing.categoryId,
+                    name: draft.name,
+                    ...(draft.description ? { description: draft.description } : {}),
+                    priceCents: draft.priceCents,
+                    isAvailable: draft.isAvailable,
+                  },
+                },
+                {
+                  onSuccess: () => {
+                    toast(`${draft.name} added`);
+                    setEditing(null);
+                  },
+                },
+              );
+            }
+          }}
         />
-      ))}
-    </ScrollView>
+      ) : null}
+
+      <ConfirmDialog
+        open={removing !== null}
+        onClose={() => setRemoving(null)}
+        onConfirm={() => {
+          const target = removing;
+          if (!target) return;
+          menu.deleteItem.mutate(
+            { id: target.id },
+            {
+              onSuccess: () => {
+                toast(`${target.name} removed from the menu`);
+                setRemoving(null);
+              },
+              onError: (error) => {
+                setNotice(errorMessage(error));
+                setRemoving(null);
+              },
+            },
+          );
+        }}
+        title={removing ? `Remove ${removing.name}?` : "Remove this item?"}
+        consequence="It disappears from the menu straight away. Past orders keep it exactly as it was priced."
+        confirmLabel="Remove from menu"
+        isWorking={menu.deleteItem.isPending}
+      />
+    </View>
   );
 }
 
@@ -142,257 +230,194 @@ function CategorySection({
   category,
   items,
   isFiltered,
-  editing,
-  setEditing,
-  setNotice,
   menu,
+  onAdd,
+  onEdit,
+  onRemove,
+  onNotice,
 }: {
   category: MenuCategory;
   items: MenuItem[];
   isFiltered: boolean;
-  editing: { kind: "new"; categoryId: string } | { kind: "edit"; item: MenuItem } | null;
-  setEditing: (
-    value: { kind: "new"; categoryId: string } | { kind: "edit"; item: MenuItem } | null,
-  ) => void;
-  setNotice: (value: string | null) => void;
   menu: ReturnType<typeof useMenu>;
+  onAdd: () => void;
+  onEdit: (item: MenuItem) => void;
+  onRemove: (item: MenuItem) => void;
+  onNotice: (message: string) => void;
 }) {
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(category.name);
-
-  const addingHere = editing?.kind === "new" && editing.categoryId === category.id;
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   return (
-    <View style={{ gap: 6, paddingTop: 8 }}>
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-          borderBottomWidth: 2,
-          borderBottomColor: "#e4e4e7",
-          paddingBottom: 6,
-        }}
-      >
-        {renaming ? (
+    <Section
+      title={renaming ? "" : `${category.name}`}
+      actions={
+        renaming ? null : (
           <>
+            <Text variant="caption" tone="subtle">
+              {category.itemCount} {category.itemCount === 1 ? "item" : "items"}
+            </Text>
+            <IconButton icon="pencil" label={`Rename ${category.name}`} onPress={() => setRenaming(true)} />
+            <IconButton
+              icon="trash"
+              label={`Delete ${category.name}`}
+              tone="danger"
+              onPress={() => setConfirmingDelete(true)}
+            />
+            <Button label="Add item" icon="plus" size="sm" variant="secondary" onPress={onAdd} />
+          </>
+        )
+      }
+    >
+      {renaming ? (
+        <View style={{ flexDirection: "row", gap: space[2], alignItems: "center" }}>
+          <View style={{ width: 260 }}>
             <TextInput
               value={name}
               onChangeText={setName}
-              style={{
-                borderWidth: 1,
-                borderColor: "#d4d4d8",
-                borderRadius: 6,
-                paddingHorizontal: 8,
-                paddingVertical: 5,
-                minWidth: 180,
-              }}
+              accessibilityLabel={`Rename ${category.name}`}
+              onSubmitEditing={() => saveName()}
             />
-            <Pressable
-              onPress={() =>
-                menu.updateCategory.mutate(
-                  { id: category.id, data: { name: name.trim() } },
-                  {
-                    onSuccess: () => setRenaming(false),
-                    onError: (error) => setNotice(errorMessage(error)),
-                  },
-                )
-              }
-            >
-              <Text style={{ color: "#2563eb" }}>Save</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                setName(category.name);
-                setRenaming(false);
-              }}
-            >
-              <Text style={{ color: "#52525b" }}>Cancel</Text>
-            </Pressable>
-          </>
-        ) : (
-          <>
-            <Text style={{ fontSize: 17, fontWeight: "600" }}>{category.name}</Text>
-            <Text style={{ color: "#71717a" }}>
-              {category.itemCount} {category.itemCount === 1 ? "item" : "items"}
-            </Text>
-            <View style={{ flex: 1 }} />
-            <Pressable onPress={() => setRenaming(true)}>
-              <Text style={{ color: "#2563eb", fontSize: 13 }}>Rename</Text>
-            </Pressable>
-            <Pressable
-              onPress={() =>
-                menu.deleteCategory.mutate(
-                  { id: category.id },
-                  { onError: (error) => setNotice(errorMessage(error)) },
-                )
-              }
-            >
-              <Text style={{ color: "#b91c1c", fontSize: 13 }}>Delete</Text>
-            </Pressable>
-          </>
-        )}
-      </View>
-
-      {items.map((item) =>
-        editing?.kind === "edit" && editing.item.id === item.id ? (
-          <MenuItemForm
-            key={item.id}
-            initial={item}
-            submitLabel="Save item"
-            isSaving={menu.updateItem.isPending}
-            error={menu.updateItem.error}
-            onCancel={() => setEditing(null)}
-            onSubmit={(draft) => submitEdit(menu, item, draft, () => setEditing(null))}
+          </View>
+          <Button label="Save" variant="primary" size="sm" onPress={() => saveName()} />
+          <Button
+            label="Cancel"
+            variant="ghost"
+            size="sm"
+            onPress={() => {
+              setName(category.name);
+              setRenaming(false);
+            }}
           />
-        ) : (
-          <ItemRow
-            key={item.id}
-            item={item}
-            menu={menu}
-            setNotice={setNotice}
-            onEdit={() => setEditing({ kind: "edit", item })}
-          />
-        ),
-      )}
-
-      {items.length === 0 ? (
-        <Text style={{ color: "#a1a1aa", paddingVertical: 6 }}>
-          {isFiltered ? "No items here match that search." : "Nothing on the menu here yet."}
-        </Text>
+        </View>
       ) : null}
 
-      {addingHere ? (
-        <MenuItemForm
-          submitLabel="Add item"
-          isSaving={menu.createItem.isPending}
-          error={menu.createItem.error}
-          onCancel={() => setEditing(null)}
-          onSubmit={(draft) =>
-            menu.createItem.mutate(
-              {
-                data: {
-                  categoryId: category.id,
-                  name: draft.name,
-                  ...(draft.description ? { description: draft.description } : {}),
-                  priceCents: draft.priceCents,
-                  isAvailable: draft.isAvailable,
-                },
+      <DataTable<MenuItem>
+        caption={category.name}
+        rows={items}
+        keyExtractor={(item) => item.id}
+        emptyState={
+          <Surface padded={false}>
+            <EmptyState
+              icon="book"
+              title={isFiltered ? "Nothing here matches that search" : `Nothing in ${category.name} yet`}
+              body={isFiltered ? undefined : "Add the first item to this category."}
+              action={isFiltered ? undefined : { label: "Add item", onPress: onAdd }}
+            />
+          </Surface>
+        }
+        columns={[
+          {
+            key: "name",
+            header: "Item",
+            flex: 3,
+            render: (item) => (
+              <View style={{ gap: 1 }}>
+                <Text variant="body">{item.name}</Text>
+                {item.description ? (
+                  <Text variant="caption" tone="subtle" numberOfLines={1}>
+                    {item.description}
+                  </Text>
+                ) : null}
+              </View>
+            ),
+          },
+          {
+            key: "price",
+            header: "Price",
+            width: 90,
+            align: "right",
+            render: (item) => <Text variant="data">{formatMoney(item.priceCents)}</Text>,
+          },
+          {
+            key: "availability",
+            header: "Availability",
+            width: 150,
+            render: (item) => (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: space[2] }}>
+                {/* Temporary and reversible, unlike removal. */}
+                <Switch
+                  value={item.isAvailable}
+                  label={`${item.name} available`}
+                  onValueChange={(next) =>
+                    menu.updateItem.mutate(
+                      { id: item.id, data: { isAvailable: next } },
+                      { onError: (error) => onNotice(errorMessage(error)) },
+                    )
+                  }
+                />
+                <StatusBadge
+                  label={item.isAvailable ? "Available" : "Off"}
+                  tone={item.isAvailable ? "success" : "neutral"}
+                  dot={false}
+                />
+              </View>
+            ),
+          },
+          {
+            key: "actions",
+            header: "",
+            width: 76,
+            align: "right",
+            render: (item) => (
+              <View style={{ flexDirection: "row", gap: space[1] }}>
+                <IconButton icon="pencil" label={`Edit ${item.name}`} onPress={() => onEdit(item)} />
+                <IconButton
+                  icon="trash"
+                  label={`Remove ${item.name}`}
+                  tone="danger"
+                  onPress={() => onRemove(item)}
+                />
+              </View>
+            ),
+          },
+        ]}
+      />
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        onClose={() => setConfirmingDelete(false)}
+        onConfirm={() => {
+          menu.deleteCategory.mutate(
+            { id: category.id },
+            {
+              onSuccess: () => setConfirmingDelete(false),
+              onError: (error) => {
+                onNotice(errorMessage(error));
+                setConfirmingDelete(false);
               },
-              { onSuccess: () => setEditing(null) },
-            )
-          }
-        />
-      ) : (
-        <Pressable onPress={() => setEditing({ kind: "new", categoryId: category.id })}>
-          <Text style={{ color: "#2563eb", fontSize: 13, paddingVertical: 4 }}>+ Add item</Text>
-        </Pressable>
-      )}
-    </View>
+            },
+          );
+        }}
+        title={`Delete ${category.name}?`}
+        consequence="A category holding items cannot be deleted — move or remove them first."
+        confirmLabel="Delete category"
+        isWorking={menu.deleteCategory.isPending}
+      />
+    </Section>
   );
+
+  function saveName() {
+    menu.updateCategory.mutate(
+      { id: category.id, data: { name: name.trim() } },
+      {
+        onSuccess: () => setRenaming(false),
+        onError: (error) => onNotice(errorMessage(error)),
+      },
+    );
+  }
 }
 
-function ItemRow({
-  item,
-  menu,
-  setNotice,
-  onEdit,
-}: {
-  item: MenuItem;
-  menu: ReturnType<typeof useMenu>;
-  setNotice: (value: string | null) => void;
-  onEdit: () => void;
-}) {
-  const [confirming, setConfirming] = useState(false);
-
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 12,
-        paddingVertical: 7,
-        borderBottomWidth: 1,
-        borderBottomColor: "#f4f4f5",
-        opacity: item.isAvailable ? 1 : 0.55,
-      }}
-    >
-      <View style={{ flex: 1 }}>
-        <Text>{item.name}</Text>
-        {item.description ? (
-          <Text style={{ color: "#a1a1aa", fontSize: 12 }}>{item.description}</Text>
-        ) : null}
-      </View>
-
-      <Text style={{ fontFamily: "monospace", width: 80, textAlign: "right" }}>
-        {formatMoney(item.priceCents)}
-      </Text>
-
-      {/* Availability is temporary and reversible, unlike removal. */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, width: 150 }}>
-        <Switch
-          value={item.isAvailable}
-          onValueChange={(next) =>
-            menu.updateItem.mutate(
-              { id: item.id, data: { isAvailable: next } },
-              { onError: (error) => setNotice(errorMessage(error)) },
-            )
-          }
-        />
-        <Text style={{ fontSize: 12, color: "#52525b" }}>
-          {item.isAvailable ? "Available" : "Unavailable"}
-        </Text>
-      </View>
-
-      {confirming ? (
-        <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-          <Text style={{ fontSize: 12, color: "#52525b" }}>Remove from menu?</Text>
-          <Pressable
-            onPress={() =>
-              menu.deleteItem.mutate(
-                { id: item.id },
-                {
-                  onSuccess: () => setConfirming(false),
-                  onError: (error) => setNotice(errorMessage(error)),
-                },
-              )
-            }
-          >
-            <Text style={{ color: "#b91c1c", fontSize: 13 }}>Remove</Text>
-          </Pressable>
-          <Pressable onPress={() => setConfirming(false)}>
-            <Text style={{ color: "#52525b", fontSize: 13 }}>Keep</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <View style={{ flexDirection: "row", gap: 10 }}>
-          <Pressable onPress={onEdit}>
-            <Text style={{ color: "#2563eb", fontSize: 13 }}>Edit</Text>
-          </Pressable>
-          <Pressable onPress={() => setConfirming(true)}>
-            <Text style={{ color: "#b91c1c", fontSize: 13 }}>Remove</Text>
-          </Pressable>
-        </View>
-      )}
-    </View>
-  );
-}
-
-/** Only the fields that actually changed go in the PATCH. */
-function submitEdit(
-  menu: ReturnType<typeof useMenu>,
-  item: MenuItem,
-  draft: ItemDraft,
-  done: () => void,
-) {
+/** Only what actually changed goes in the PATCH. */
+function changedFields(item: MenuItem, draft: ItemDraft) {
   const data: Record<string, unknown> = {};
   if (draft.name !== item.name) data.name = draft.name;
-  // Cleared means null, not "": the API rejects a blank string on purpose.
   if (draft.description !== (item.description ?? "")) {
+    // Cleared means null, not "": the API rejects a blank string on purpose.
     data.description = draft.description === "" ? null : draft.description;
   }
   if (draft.priceCents !== item.priceCents) data.priceCents = draft.priceCents;
   if (draft.isAvailable !== item.isAvailable) data.isAvailable = draft.isAvailable;
-
-  menu.updateItem.mutate({ id: item.id, data }, { onSuccess: done });
+  return data;
 }

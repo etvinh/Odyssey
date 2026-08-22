@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Pressable, ScrollView, Text, View } from "react-native";
-import { Link } from "expo-router";
+import { useState } from "react";
+import { View } from "react-native";
+import { useRouter } from "expo-router";
 import {
   errorMessage,
   getGetOrderQueryKey,
@@ -8,144 +9,202 @@ import {
   useApplyOrderAction,
   useGetOrder,
 } from "@odyssey/api-client";
-import { actionLabel, channelLabel, formatMoney, formatTime, statusLabel } from "./format";
+import type { OrderAction } from "@odyssey/types";
+import {
+  Button,
+  ConfirmDialog,
+  DetailDrawer,
+  ErrorState,
+  InlineAlert,
+  Section,
+  Skeleton,
+  StatusBadge,
+  Text,
+  color,
+  space,
+  useToast,
+  borderWidth,
+} from "@odyssey/ui";
+import { formatMoney, formatTime } from "../../format";
+import { actionLabel, channelLabel, statusLabel, statusTone } from "./format";
 
 export function OrderDetail({ id }: { id: string }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+
   const query = useGetOrder(id);
+  const order = query.data?.status === 200 ? query.data.data : undefined;
 
   const applyAction = useApplyOrderAction({
     mutation: {
-      onSuccess: async () => {
+      onSuccess: async (result) => {
         // Both the row and the drawer carry status and allowedActions, so both
         // are stale the moment an action lands.
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey() }),
           queryClient.invalidateQueries({ queryKey: getGetOrderQueryKey(id) }),
         ]);
+        if (result.status === 200) {
+          toast(`Order #${result.data.orderNumber} is now ${statusLabel(result.data.status).toLowerCase()}`);
+        }
       },
+      onError: (error) => toast(errorMessage(error), "error"),
     },
   });
 
-  const order = query.data?.status === 200 ? query.data.data : undefined;
+  const close = () => router.push("/orders");
+
+  const run = (action: OrderAction) => {
+    if (action === "cancel") return setConfirmingCancel(true);
+    applyAction.mutate({ id, data: { action } });
+  };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
-      <Link href="/orders" style={{ color: "#2563eb" }}>
-        ← Orders
-      </Link>
-
-      {query.isPending ? <Text>Loading…</Text> : null}
-
-      {query.isError ? (
-        <View style={{ gap: 8 }}>
-          <Text style={{ color: "#b91c1c" }}>{errorMessage(query.error)}</Text>
-          <Pressable onPress={() => void query.refetch()}>
-            <Text style={{ color: "#2563eb" }}>Retry</Text>
-          </Pressable>
-        </View>
-      ) : null}
-
-      {order ? (
-        <>
-          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 12 }}>
-            <Text style={{ fontSize: 22, fontWeight: "600", fontFamily: "monospace" }}>
-              #{order.orderNumber}
-            </Text>
-            <Text style={{ fontSize: 16 }}>{statusLabel(order.status)}</Text>
-            <Text style={{ color: "#52525b" }}>{channelLabel(order.channel)}</Text>
+    <>
+      <DetailDrawer
+        open
+        onClose={close}
+        title={order ? `Order #${order.orderNumber}` : "Order"}
+        footer={
+          order && order.allowedActions.length > 0 ? (
+            <View style={{ flexDirection: "row", gap: space[2], flexWrap: "wrap" }}>
+              {order.allowedActions.map((action, index) => (
+                <Button
+                  key={action}
+                  label={actionLabel(action)}
+                  // The server puts the advancing action first, so the primary
+                  // button is whatever it says comes next.
+                  variant={index === 0 ? "primary" : action === "cancel" ? "danger" : "secondary"}
+                  onPress={() => run(action)}
+                  loading={applyAction.isPending && applyAction.variables?.data.action === action}
+                  disabled={applyAction.isPending}
+                />
+              ))}
+            </View>
+          ) : null
+        }
+      >
+        {query.isPending ? (
+          <View style={{ gap: space[3] }}>
+            <Skeleton width={180} height={22} />
+            <Skeleton width="60%" />
+            <Skeleton width="80%" />
           </View>
-
-          <Text>{order.customer ? order.customer.name : "Walk-in"}</Text>
-          {order.customer?.phone ? (
-            <Text style={{ color: "#52525b" }}>{order.customer.phone}</Text>
-          ) : null}
-
-          <View style={{ gap: 4 }}>
-            <Text style={{ fontWeight: "600" }}>Items</Text>
-            {order.items.map((item) => (
-              <View key={item.id} style={{ flexDirection: "row", gap: 12 }}>
-                <Text style={{ width: 40, fontFamily: "monospace" }}>{item.quantity}×</Text>
-                <Text style={{ flex: 1 }}>{item.name}</Text>
-                <Text style={{ fontFamily: "monospace", color: "#52525b" }}>
-                  {formatMoney(item.unitPriceCents)}
-                </Text>
-                <Text style={{ fontFamily: "monospace", width: 90, textAlign: "right" }}>
-                  {formatMoney(item.lineTotalCents)}
-                </Text>
-              </View>
-            ))}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                borderTopWidth: 1,
-                borderTopColor: "#e4e4e7",
-                paddingTop: 6,
-              }}
-            >
-              <Text style={{ fontWeight: "600" }}>Total</Text>
-              <Text style={{ fontWeight: "600", fontFamily: "monospace" }}>
-                {formatMoney(order.totalCents)}
+        ) : query.isError ? (
+          <ErrorState cause={errorMessage(query.error)} onRetry={() => void query.refetch()} />
+        ) : order ? (
+          <>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: space[2], flexWrap: "wrap" }}>
+              <StatusBadge label={statusLabel(order.status)} tone={statusTone(order.status)} />
+              <Text variant="body" tone="muted">
+                {channelLabel(order.channel)}
               </Text>
             </View>
-          </View>
 
-          {order.kitchenNote ? (
-            <View style={{ gap: 4 }}>
-              <Text style={{ fontWeight: "600" }}>Kitchen note</Text>
-              <Text>{order.kitchenNote}</Text>
-            </View>
-          ) : null}
-
-          <View style={{ gap: 4 }}>
-            <Text style={{ fontWeight: "600" }}>Timeline</Text>
-            {order.timeline.map((entry, index) => (
-              <Text key={`${entry.status}-${index}`} style={{ color: "#52525b" }}>
-                {statusLabel(entry.status)} · {formatTime(entry.changedAt)}
-              </Text>
-            ))}
-          </View>
-
-          {applyAction.isError ? (
-            <Text style={{ color: "#b91c1c" }}>{errorMessage(applyAction.error)}</Text>
-          ) : null}
-
-          {/**
-           * Buttons come only from the server's allowedActions. The dashboard
-           * has no copy of the transition table and must never grow one —
-           * see ADR-0003.
-           */}
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {order.allowedActions.length === 0 ? (
-              <Text style={{ color: "#52525b" }}>
-                This order is {statusLabel(order.status).toLowerCase()}. There is nothing left to do.
-              </Text>
+              <InlineAlert
+                tone="info"
+                message={`This order is ${statusLabel(order.status).toLowerCase()}. There is nothing left to do.`}
+              />
             ) : null}
-            {order.allowedActions.map((action) => (
-              <Pressable
-                key={action}
-                disabled={applyAction.isPending}
-                onPress={() =>
-                  applyAction.mutate({ id, data: { action } })
-                }
-                style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 6,
-                  borderWidth: 1,
-                  borderColor: action === "cancel" ? "#b91c1c" : "#2563eb",
-                  opacity: applyAction.isPending ? 0.5 : 1,
-                }}
-              >
-                <Text style={{ color: action === "cancel" ? "#b91c1c" : "#2563eb" }}>
-                  {actionLabel(action)}
+
+            <Section title="Customer">
+              {order.customer ? (
+                <View style={{ gap: space[0.5] }}>
+                  <Text variant="body">{order.customer.name}</Text>
+                  {order.customer.phone ? (
+                    <Text variant="body" tone="muted">
+                      {order.customer.phone}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : (
+                <Text variant="body" tone="subtle">
+                  Walk-in
                 </Text>
-              </Pressable>
-            ))}
-          </View>
-        </>
-      ) : null}
-    </ScrollView>
+              )}
+            </Section>
+
+            <Section title="Items">
+              <View style={{ gap: space[2] }}>
+                {order.items.map((item) => (
+                  <View key={item.id} style={{ flexDirection: "row", alignItems: "baseline", gap: space[3] }}>
+                    <Text variant="data" tone="muted" style={{ width: 32 }}>
+                      {item.quantity}×
+                    </Text>
+                    <View style={{ flex: 1 }}>
+                      <Text variant="body">{item.name}</Text>
+                      <Text variant="caption" tone="subtle">
+                        {formatMoney(item.unitPriceCents)} each
+                      </Text>
+                    </View>
+                    <Text variant="data">{formatMoney(item.lineTotalCents)}</Text>
+                  </View>
+                ))}
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    paddingTop: space[2],
+                    borderTopWidth: borderWidth.hairline,
+                    borderTopColor: color.border,
+                  }}
+                >
+                  <Text variant="bodyStrong">Total</Text>
+                  <Text variant="data" style={{ fontSize: 15 }}>
+                    {formatMoney(order.totalCents)}
+                  </Text>
+                </View>
+              </View>
+            </Section>
+
+            {order.kitchenNote ? (
+              <Section title="Kitchen note">
+                <Text variant="body">{order.kitchenNote}</Text>
+              </Section>
+            ) : null}
+
+            <Section title="Timeline">
+              <View style={{ gap: space[2] }}>
+                {order.timeline.map((entry, index) => (
+                  <View key={`${entry.status}-${index}`} style={{ flexDirection: "row", alignItems: "center", gap: space[3] }}>
+                    <View
+                      style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: 999,
+                        backgroundColor: index === order.timeline.length - 1 ? color.accent : color.borderStrong,
+                      }}
+                    />
+                    <Text variant="body" style={{ flex: 1 }}>
+                      {statusLabel(entry.status)}
+                    </Text>
+                    <Text variant="caption" tone="subtle">
+                      {formatTime(entry.changedAt)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </Section>
+          </>
+        ) : null}
+      </DetailDrawer>
+
+      <ConfirmDialog
+        open={confirmingCancel}
+        onClose={() => setConfirmingCancel(false)}
+        onConfirm={() => {
+          setConfirmingCancel(false);
+          applyAction.mutate({ id, data: { action: "cancel" } });
+        }}
+        title={order ? `Cancel order #${order.orderNumber}?` : "Cancel this order?"}
+        consequence="Cancelled is final — the order cannot be reopened afterwards."
+        confirmLabel="Cancel order"
+        isWorking={applyAction.isPending}
+      />
+    </>
   );
 }

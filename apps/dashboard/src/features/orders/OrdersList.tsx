@@ -1,164 +1,177 @@
 import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import { Link } from "expo-router";
+import { View } from "react-native";
+import { useRouter } from "expo-router";
 import { errorMessage, useListOrders, type OrderRow } from "@odyssey/api-client";
 import { ORDER_STATUSES, type OrderStatus } from "@odyssey/types";
-import { channelLabel, formatMoney, formatTime, statusLabel } from "./format";
+import {
+  DataTable,
+  EmptyState,
+  ErrorState,
+  PageHeader,
+  SearchField,
+  SegmentedControl,
+  SkeletonRows,
+  StatusBadge,
+  Surface,
+  Text,
+  space,
+} from "@odyssey/ui";
+import { formatMoney, formatTime } from "../../format";
+import { channelLabel, statusLabel, statusTone } from "./format";
 
-/**
- * Stage 0 idiom, deliberately: React Native primitives and inline styles. The
- * design system lands in packages/ui later, and this screen is here to prove
- * the orders contract renders, not to be the finished Orders page.
- */
 export function OrdersList() {
-  const [status, setStatus] = useState<OrderStatus | undefined>(undefined);
+  const router = useRouter();
+  const [status, setStatus] = useState<OrderStatus | "all">("all");
   const [search, setSearch] = useState("");
 
   // Not destructured: TanStack Query v5 narrows `data` through the result
   // object's discriminated union, and destructuring throws that away.
   const query = useListOrders({
-    ...(status ? { status } : {}),
+    ...(status === "all" ? {} : { status }),
     ...(search.trim() ? { search: search.trim() } : {}),
     pageSize: 25,
   });
 
-  /**
-   * The generated response type is a union discriminated on `status`, because
-   * the route documents its 422. apiFetch throws on any non-2xx, so the error
-   * arm never actually arrives here — this narrowing is what tells TypeScript
-   * that, in one place instead of at every use site.
-   */
   const page = query.data?.status === 200 ? query.data.data : undefined;
+  const counts = page?.meta.statusCounts;
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <Text style={{ fontSize: 22, fontWeight: "600" }}>Orders</Text>
-        <Link href="/menu" style={{ color: "#2563eb" }}>
-          Menu
-        </Link>
-      </View>
-
-      <TextInput
-        value={search}
-        onChangeText={setSearch}
-        placeholder="Search by order number or customer"
-        style={{
-          borderWidth: 1,
-          borderColor: "#d4d4d8",
-          borderRadius: 6,
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-        }}
+    <View>
+      <PageHeader
+        title="Orders"
+        subtitle={page ? `${page.data.length} of ${page.meta.total} shown` : undefined}
       />
 
-      {/* Counts come from meta.statusCounts, which honours the search and
-          ignores the status filter — so they stay whole while filtering. */}
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        <FilterChip label="All" active={!status} onPress={() => setStatus(undefined)} />
-        {ORDER_STATUSES.map((option) => (
-          <FilterChip
-            key={option}
-            label={`${statusLabel(option)} ${page?.meta.statusCounts[option] ?? 0}`}
-            active={status === option}
-            onPress={() => setStatus(option)}
+      <View style={{ gap: space[4] }}>
+        <View style={{ flexDirection: "row", gap: space[3], flexWrap: "wrap", alignItems: "center" }}>
+          <SegmentedControl
+            label="Filter by status"
+            value={status}
+            onChange={setStatus}
+            segments={[
+              { value: "all" as const, label: "All", count: counts ? totalOf(counts) : undefined },
+              ...ORDER_STATUSES.map((option) => ({
+                value: option,
+                label: statusLabel(option),
+                count: counts?.[option],
+              })),
+            ]}
           />
-        ))}
-      </View>
-
-      {query.isPending ? <Text>Loading…</Text> : null}
-
-      {query.isError ? (
-        <View style={{ gap: 8 }}>
-          <Text style={{ color: "#b91c1c" }}>{errorMessage(query.error)}</Text>
-          <Pressable onPress={() => void query.refetch()}>
-            <Text style={{ color: "#2563eb" }}>Retry</Text>
-          </Pressable>
+          <View style={{ flex: 1 }} />
+          <SearchField
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Order number or customer"
+            width={280}
+          />
         </View>
-      ) : null}
 
-      {page ? (
-        <OrderRows
-          rows={page.data}
-          total={page.meta.total}
-          filtered={Boolean(status) || search.trim().length > 0}
-        />
-      ) : null}
-    </ScrollView>
-  );
-}
-
-function OrderRows({
-  rows,
-  total,
-  filtered,
-}: {
-  rows: OrderRow[];
-  total: number;
-  filtered: boolean;
-}) {
-  if (rows.length === 0) {
-    return (
-      <Text>
-        {filtered ? "No orders match these filters." : "No orders yet."}
-      </Text>
-    );
-  }
-
-  return (
-    <View style={{ gap: 4 }}>
-      <Text style={{ color: "#52525b" }}>
-        {rows.length} of {total} orders
-      </Text>
-      {rows.map((order) => (
-        <Link key={order.id} href={`/orders/${order.id}`} asChild>
-          <Pressable
-            style={{
-              flexDirection: "row",
-              gap: 12,
-              paddingVertical: 10,
-              borderBottomWidth: 1,
-              borderBottomColor: "#e4e4e7",
-            }}
-          >
-            <Text style={{ fontFamily: "monospace", width: 64 }}>#{order.orderNumber}</Text>
-            <Text style={{ width: 160 }}>{order.customer?.name ?? "Walk-in"}</Text>
-            <Text style={{ width: 100 }}>{channelLabel(order.channel)}</Text>
-            <Text style={{ width: 100 }}>{statusLabel(order.status)}</Text>
-            <Text style={{ width: 70 }}>{order.itemCount} items</Text>
-            <Text style={{ fontFamily: "monospace", width: 90, textAlign: "right" }}>
-              {formatMoney(order.totalCents)}
-            </Text>
-            <Text style={{ color: "#52525b" }}>{formatTime(order.placedAt)}</Text>
-          </Pressable>
-        </Link>
-      ))}
+        {query.isPending ? (
+          <Surface>
+            <SkeletonRows rows={8} />
+          </Surface>
+        ) : query.isError ? (
+          <Surface padded={false}>
+            <ErrorState cause={errorMessage(query.error)} onRetry={() => void query.refetch()} />
+          </Surface>
+        ) : page ? (
+          <DataTable<OrderRow>
+            caption="Orders"
+            rows={page.data}
+            keyExtractor={(order) => order.id}
+            onRowPress={(order) => router.push(`/orders/${order.id}` as "/orders")}
+            emptyState={
+              <Surface padded={false}>
+                <EmptyState
+                  title="No orders match these filters"
+                  body="Clear the search or choose a different status."
+                  action={
+                    status !== "all" || search
+                      ? {
+                          label: "Clear filters",
+                          onPress: () => {
+                            setStatus("all");
+                            setSearch("");
+                          },
+                        }
+                      : undefined
+                  }
+                />
+              </Surface>
+            }
+            columns={[
+              {
+                key: "orderNumber",
+                header: "Order",
+                width: 84,
+                render: (order) => <Text variant="data">#{order.orderNumber}</Text>,
+              },
+              {
+                key: "customer",
+                header: "Customer",
+                flex: 2,
+                render: (order) =>
+                  order.customer ? (
+                    <Text variant="body">{order.customer.name}</Text>
+                  ) : (
+                    // An ordinary case, not missing data.
+                    <Text variant="body" tone="subtle">
+                      Walk-in
+                    </Text>
+                  ),
+              },
+              {
+                key: "channel",
+                header: "Channel",
+                width: 110,
+                render: (order) => (
+                  <Text variant="body" tone="muted">
+                    {channelLabel(order.channel)}
+                  </Text>
+                ),
+              },
+              {
+                key: "status",
+                header: "Status",
+                width: 132,
+                render: (order) => (
+                  <StatusBadge label={statusLabel(order.status)} tone={statusTone(order.status)} />
+                ),
+              },
+              {
+                key: "items",
+                header: "Items",
+                width: 64,
+                align: "right",
+                render: (order) => <Text variant="data" tone="muted">{order.itemCount}</Text>,
+              },
+              {
+                key: "total",
+                header: "Total",
+                width: 96,
+                align: "right",
+                render: (order) => <Text variant="data">{formatMoney(order.totalCents)}</Text>,
+              },
+              {
+                key: "placedAt",
+                header: "Placed",
+                width: 140,
+                align: "right",
+                render: (order) => (
+                  <Text variant="caption" tone="muted">
+                    {formatTime(order.placedAt)}
+                  </Text>
+                ),
+              },
+            ]}
+          />
+        ) : null}
+      </View>
     </View>
   );
 }
 
-function FilterChip({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 999,
-        borderWidth: 1,
-        borderColor: active ? "#2563eb" : "#d4d4d8",
-        backgroundColor: active ? "#eff6ff" : "transparent",
-      }}
-    >
-      <Text style={{ color: active ? "#2563eb" : "#3f3f46" }}>{label}</Text>
-    </Pressable>
-  );
+/** Every status counted. The server zero-fills, so summing is total. */
+function totalOf(counts: Record<OrderStatus, number>): number {
+  return ORDER_STATUSES.reduce((sum, status) => sum + counts[status], 0);
 }

@@ -45,3 +45,27 @@ export function actionLabel(action: string): string {
   return ACTION_LABELS[action] ?? action;
 }
 
+
+/**
+ * The badge tone for a status. Tones carry meaning, not decoration: warning is
+ * "waiting on the manager", success is "ready for the customer", neutral is
+ * "done and closed".
+ */
+export function statusTone(
+  status: OrderStatus,
+): "warning" | "info" | "accent" | "success" | "neutral" | "danger" {
+  switch (status) {
+    case "pending":
+      return "warning";
+    case "confirmed":
+      return "info";
+    case "preparing":
+      return "accent";
+    case "ready":
+      return "success";
+    case "completed":
+      return "neutral";
+    case "cancelled":
+      return "danger";
+  }
+}

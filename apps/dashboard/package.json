@@ -7,12 +7,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.2",
     "@expo/metro-runtime": "~57.0.12",
     "@odyssey/api-client": "workspace:*",
     "@odyssey/types": "workspace:*",
+    "@odyssey/ui": "workspace:*",
     "@tanstack/react-query": "^5.87.1",
     "expo": "^57.0.15",
     "expo-constants": "~57.0.13",
+    "expo-font": "~57.0.1",
     "expo-linking": "~57.0.7",
     "expo-router": "~57.0.15",
     "expo-status-bar": "~57.0.1",
@@ -21,6 +24,7 @@
     "react-native": "0.86.2",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.2",
+    "react-native-svg": "15.15.4",
     "react-native-web": "^0.21.2"
   },
   "devDependencies": {
