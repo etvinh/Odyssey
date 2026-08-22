@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+out/
+.turbo/
+*.tsbuildinfo
+
+# Expo / React Native Web
+.expo/
+.expo-shared/
+web-build/
+
+# Cloudflare Workers
+.wrangler/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Local Postgres volume
+pgdata/
+*.sqlite
+*.sqlite3
+
+# Testing
+coverage/
+.vitest/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Local agent workspace (issues and specs per CLAUDE.md)
+.scratch/
+
+# Planning and spec docs — not part of the submitted deliverable
+*.md
+!README.md
+!docs/adr/*.md

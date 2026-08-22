@@ -1,0 +1,3 @@
+# The server owns order status transitions
+
+Status is never written directly. The client posts a named action — confirm, start_preparing, mark_ready, complete, cancel — to `POST /orders/{id}/actions`, and the server holds the transition table, applies the move, appends an order event, and rejects anything illegal with `409 INVALID_TRANSITION`. Every order response also carries `allowedActions`, computed from the current status, **on list rows as well as detail reads**: without it the inline next-action button on Home would have to re-derive the state machine on the client, which is the exact duplication this decision exists to prevent. Cancel is legal from ready, because a plated order still gets cancelled when the customer walks out.
