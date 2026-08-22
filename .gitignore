@@ -20,3 +20,7 @@ coverage/
 .scratch/
 
 # packages/api-client generated output is COMMITTED on purpose — see ADR-0004.
+
+# The assignment brief. Kept locally, never committed — it is the client's
+# material, not ours to publish.
+INSTRUCTIONS.md

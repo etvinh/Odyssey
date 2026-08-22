@@ -6,11 +6,11 @@
 
 web
 
-The dashboard is an Expo + React Native app rendered to web via React Native Web. Web is the only verified target; native is not exercised or claimed. The RN substrate is a stack requirement from `../INSTRUCTIONS.md`, not a native-delivery commitment.
+The dashboard is an Expo + React Native app rendered to web via React Native Web. Web is the only verified target; native is not exercised or claimed. The RN substrate is a stack requirement of the brief, not a native-delivery commitment.
 
 ## Stack
 
-Fixed by `../INSTRUCTIONS.md`. Not open for substitution — Next.js, NestJS, Prisma, tRPC, Supabase, Firebase, and handwritten frontend API types are explicitly excluded.
+Fixed by the brief. Not open for substitution — Next.js, NestJS, Prisma, tRPC, Supabase, Firebase, and handwritten frontend API types are explicitly excluded.
 
 - **Monorepo:** pnpm workspace + Turborepo.
 - **`apps/dashboard`:** Expo + React Native + React Native Web. Expo Router for file-based routing.
@@ -56,7 +56,7 @@ Success is the manager knowing the state of the day in one glance at Home, and e
 
 ## Positioning
 
-Odyssey is built to the assignment in `../INSTRUCTIONS.md`: a small but complete fullstack restaurant operations product, on a fixed stack, within a 1–2 day timebox.
+Odyssey is built to a take-home assignment: a small but complete fullstack restaurant operations product, on a fixed stack, within a 1–2 day timebox.
 
 That framing sets the priorities:
 
@@ -80,7 +80,7 @@ No market claims, competitor comparisons, customer counts, or pricing may be inv
 
 ### Confirmed constraints
 
-- **The stack is fixed** by `../INSTRUCTIONS.md` and its exclusion list.
+- **The stack is fixed** by the brief and its exclusion list.
 - **The design system is hand-built** on React Native primitives (`View`, `Text`, `Pressable`) with `StyleSheet.create` over a typed token module in `packages/ui`. No third-party component library. MUI was considered and rejected — it targets `react-dom` and has no React Native runtime; see `../docs/adr/0002-react-native-primitives.md`.
 - **Tokens are centralized** in one module and named semantically (`surface`, `foreground`, `border`, `danger`) rather than by value, so a second theme is a swap rather than a rewrite.
 - **The generated API client is committed** to the repository. `typecheck` depends on `gen:contract`, so a stale client fails locally.
@@ -116,7 +116,7 @@ Name: **Odyssey**. No logo, wordmark, palette, or voice guide exists or is inher
 
 ## Evidence on Hand
 
-- `../INSTRUCTIONS.md` — the assignment brief. The authority for stack, required pages, architecture rules, and deliverables.
+- The assignment brief — held locally, deliberately not committed. The authority for stack, required pages, architecture rules, and deliverables.
 - `API.md` — the REST contract: endpoint shapes, generated hook names, the transition table, and an endpoint→component wiring map.
 - `COMPONENTS.md` — the component inventory: RN-based primitives and per-page compositions.
 - `../CONTEXT.md` — domain glossary.
