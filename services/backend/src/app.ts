@@ -7,14 +7,6 @@ import { createDb as realCreateDb, type DbFactory } from "./db/client.js";
 import type { AppEnv } from "./env.js";
 
 /**
- * Zod rejections become the same envelope as everything else. Without this,
- * @hono/zod-openapi answers with its own un-enveloped shape and the dashboard's
- * fetcher reports NON_JSON_RESPONSE instead of the field errors it was given.
- *
- * Paths are dotted so a nested body error keys as `customer.name` — exactly
- * what the form needs to put the message under the right input.
- */
-/**
  * `createDb` defaults to a real connection. Tests pass an adapter that hands
  * every handler the same transaction and then roll it back, which is what lets
  * a test observe behaviour without leaving rows behind.
