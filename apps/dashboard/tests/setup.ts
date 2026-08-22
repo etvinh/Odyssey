@@ -1,4 +1,13 @@
+import { cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
 import type { Customer, OrderRow } from "@odyssey/api-client";
+
+/**
+ * Testing Library only auto-cleans when vitest runs with `globals: true`, which
+ * this package does not. Without it every render stays in the document and the
+ * next test finds two of everything.
+ */
+afterEach(cleanup);
 
 /**
  * Shared test environment. Registered as vitest `setupFiles`, and the single
@@ -40,3 +49,9 @@ export function customerRow(overrides: Partial<Customer> = {}): Customer {
     ...overrides,
   };
 }
+
+/**
+ * React Native Web reads this global to decide whether to run development-only
+ * checks. Metro defines it at build time; vitest does not.
+ */
+(globalThis as { __DEV__?: boolean }).__DEV__ = true;

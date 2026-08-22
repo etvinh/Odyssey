@@ -1,4 +1,5 @@
 import { View } from "react-native";
+import { formatMoney, formatTime } from "@odyssey/shared";
 import { useRouter } from "expo-router";
 import { errorMessage, useGetCustomer } from "@odyssey/api-client";
 import {
@@ -13,7 +14,6 @@ import {
   radius,
   space,
 } from "@odyssey/ui";
-import { formatMoney, formatTime } from "../../format";
 import { statusLabel, statusTone } from "../orders/format";
 
 export function CustomerDetail({ id }: { id: string }) {

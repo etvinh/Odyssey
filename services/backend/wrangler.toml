@@ -3,5 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2025-08-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Local Docker credentials, not a secret — committed so a clean clone runs with
+# no setup step. Export DATABASE_URL or add a .env to point somewhere else; a
+# real deployment would supply this as a secret instead.
+[vars]
+DATABASE_URL = "postgres://odyssey:odyssey@127.0.0.1:5432/odyssey"
+
 [dev]
 port = 8787

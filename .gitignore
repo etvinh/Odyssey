@@ -29,10 +29,10 @@ apps/dashboard/.gitignore
 # ---------------------------------------------------------------------------
 # Secrets. Nothing here should ever reach the remote.
 # ---------------------------------------------------------------------------
-# Real values live in .env; the committed template is .env.example.
+# The local Postgres URL is committed in wrangler.toml — a local credential,
+# not a secret. A .env is only ever an override, so it stays ignored.
 .env
 .env.*
-!.env.example
 
 # wrangler's default secrets filename. We use .env instead, but an unignored
 # .dev.vars is a credentials file waiting for `git add -A`.

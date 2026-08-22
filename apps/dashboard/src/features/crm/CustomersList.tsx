@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View } from "react-native";
+import { formatMoney, formatTime } from "@odyssey/shared";
 import { usePathname, useRouter } from "expo-router";
 import { errorMessage, useListCustomers, type Customer } from "@odyssey/api-client";
 import {
@@ -14,7 +15,6 @@ import {
   Text,
   space,
 } from "@odyssey/ui";
-import { formatMoney, formatTime } from "../../format";
 import { useDebounced } from "../useDebounced";
 
 /** One screenful. The server caps a page at 100. */

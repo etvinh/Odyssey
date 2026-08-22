@@ -11,10 +11,18 @@ import {
   FormRow,
   Icon,
   IconButton,
+  Clock,
   InlineAlert,
+  KpiStat,
+  Logo,
+  Logomark,
   PageHeader,
+  Pagination,
+  ProgressBar,
+  SaveBar,
   SearchField,
   Section,
+  Select,
   SegmentedControl,
   Skeleton,
   SkeletonRows,
@@ -50,6 +58,9 @@ export default function UiLibrary() {
   const [dialog, setDialog] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [drawer, setDrawer] = useState(false);
+  const [category, setCategory] = useState<string | null>("smalls");
+  const [page, setPage] = useState(2);
+  const [dirty, setDirty] = useState(true);
 
   return (
     <View style={{ gap: space[12] }}>
@@ -124,6 +135,31 @@ export default function UiLibrary() {
             </View>
           ))}
         </View>
+      </Section>
+
+      <Section title="Brand and chrome">
+        <Surface>
+          <View style={{ flexDirection: "row", gap: space[12], flexWrap: "wrap", alignItems: "flex-end" }}>
+            <View style={{ gap: space[2] }}>
+              <Text variant="caption" tone="subtle">
+                Lockup — sidebar
+              </Text>
+              <Logo height={78} />
+            </View>
+            <View style={{ gap: space[2] }}>
+              <Text variant="caption" tone="subtle">
+                Mark — narrow header
+              </Text>
+              <Logomark size={28} />
+            </View>
+            <View style={{ gap: space[2] }}>
+              <Text variant="caption" tone="subtle">
+                Clock — live, tabular
+              </Text>
+              <Clock />
+            </View>
+          </View>
+        </Surface>
       </Section>
 
       <Section title="Icons">
@@ -218,6 +254,105 @@ export default function UiLibrary() {
             <Row label="stepper">
               <Stepper value={quantity} onChange={setQuantity} label="Quantity" min={1} max={9} />
             </Row>
+            <FormRow label="Category">
+              <Select
+                label="Category"
+                value={category}
+                onChange={setCategory}
+                options={[
+                  { value: "smalls", label: "Small plates" },
+                  { value: "mains", label: "Mains" },
+                  { value: "sides", label: "Sides" },
+                  { value: "desserts", label: "Desserts" },
+                ]}
+              />
+            </FormRow>
+            <FormRow label="Category" error="Choose a category.">
+              <Select
+                label="Category, invalid"
+                value={null}
+                onChange={() => {}}
+                options={[{ value: "smalls", label: "Small plates" }]}
+                invalid
+              />
+            </FormRow>
+            <FormRow label="Category" hint="Disabled while the menu is locked.">
+              <Select
+                label="Category, disabled"
+                value="smalls"
+                onChange={() => {}}
+                options={[{ value: "smalls", label: "Small plates" }]}
+                disabled
+              />
+            </FormRow>
+            <FormRow label="Customer" hint="Empty list, with a pinned action.">
+              <Select
+                label="Customer"
+                value={null}
+                onChange={() => {}}
+                options={[]}
+                emptyText="No customers yet"
+                footer={<Button label="+ New customer" variant="ghost" size="sm" onPress={() => {}} />}
+              />
+            </FormRow>
+          </View>
+        </Surface>
+      </Section>
+
+      <Section title="KpiStat">
+        <View style={{ flexDirection: "row", gap: space[4], flexWrap: "wrap" }}>
+          <KpiStat label="Orders today" value="47" context="vs 38 yesterday" trend="up" tone="positive" />
+          <KpiStat label="Revenue today" value="$1,284.50" context="vs $1,502.00 yesterday" trend="down" tone="negative" />
+          <KpiStat label="Pending" value="6" context="Waiting to be accepted" />
+        </View>
+      </Section>
+
+      <Section title="ProgressBar">
+        <Surface>
+          <View style={{ gap: space[3], maxWidth: 420 }}>
+            {[
+              { name: "Cacio e pepe", share: 0.42 },
+              { name: "Burrata", share: 0.18 },
+              { name: "Affogato", share: 0.04 },
+            ].map((item) => (
+              <View key={item.name} style={{ gap: space[1] }}>
+                <View style={{ flexDirection: "row", alignItems: "baseline", gap: space[3] }}>
+                  <Text variant="body" style={{ flex: 1 }}>
+                    {item.name}
+                  </Text>
+                  {/* Always paired with its number — a bar alone cannot be read. */}
+                  <Text variant="data" tone="muted">
+                    {Math.round(item.share * 100)}%
+                  </Text>
+                </View>
+                <ProgressBar value={item.share} label={`${item.name}, ${Math.round(item.share * 100)} percent`} />
+              </View>
+            ))}
+          </View>
+        </Surface>
+      </Section>
+
+      <Section title="SaveBar">
+        <Surface>
+          <View style={{ gap: space[4] }}>
+            <Text variant="body" tone="muted">
+              Stays put when clean rather than appearing on first edit, which would shift the card
+              under the pointer.
+            </Text>
+            <SaveBar dirty={dirty} onSave={() => setDirty(false)} onReset={() => setDirty(false)} />
+            <SaveBar dirty={false} onSave={() => {}} onReset={() => {}} />
+            <SaveBar dirty saving onSave={() => {}} onReset={() => {}} />
+          </View>
+        </Surface>
+      </Section>
+
+      <Section title="Pagination">
+        <Surface>
+          <View style={{ gap: space[6] }}>
+            <Pagination page={page} pageSize={25} total={240} onPageChange={setPage} noun="customers" />
+            <Pagination page={1} pageSize={25} total={12} onPageChange={() => {}} noun="orders" />
+            {/* Nothing matched: no range to report and both controls disabled. */}
+            <Pagination page={1} pageSize={25} total={0} onPageChange={() => {}} noun="orders" />
           </View>
         </Surface>
       </Section>

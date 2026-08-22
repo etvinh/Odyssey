@@ -1,9 +1,9 @@
 /**
- * Formatting shared across features.
+ * Formatting shared by every surface that shows a figure.
  *
- * PRODUCT.md puts `formatMoney` in `packages/shared` eventually; it lives here
- * until something outside the dashboard needs it, rather than standing up a
- * package for one consumer.
+ * Here rather than in the dashboard because the Worker and a future native
+ * client render the same money and the same timestamps, and a second
+ * implementation of "how do we write $12.50" is a second answer.
  */
 
 /** Integer cents to `$12.50`. Money is never a float in this codebase. */

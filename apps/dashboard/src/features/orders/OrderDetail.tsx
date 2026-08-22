@@ -10,6 +10,7 @@ import {
   useGetOrder,
 } from "@odyssey/api-client";
 import type { OrderAction } from "@odyssey/types";
+import { formatMoney, formatTime } from "@odyssey/shared";
 import {
   Button,
   ConfirmDialog,
@@ -25,7 +26,6 @@ import {
   useToast,
   borderWidth,
 } from "@odyssey/ui";
-import { formatMoney, formatTime } from "../../format";
 import { actionLabel, channelLabel, statusLabel, statusTone } from "./format";
 
 export function OrderDetail({ id }: { id: string }) {

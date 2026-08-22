@@ -7,7 +7,7 @@ import {
 import { IBMPlexMono_400Regular, IBMPlexMono_500Medium } from "@expo-google-fonts/ibm-plex-mono";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useGetSettings } from "@odyssey/api-client";
-import { serviceStatus } from "@odyssey/types";
+import { serviceStatus } from "@odyssey/shared";
 import { Slot, usePathname, useRouter } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";

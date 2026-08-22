@@ -11,6 +11,7 @@ import {
   type MenuItem,
 } from "@odyssey/api-client";
 import { ORDER_CHANNELS, type OrderChannel } from "@odyssey/types";
+import { formatMoney } from "@odyssey/shared";
 import {
   Button,
   Dialog,
@@ -29,7 +30,6 @@ import {
   useToast,
   borderWidth,
 } from "@odyssey/ui";
-import { formatMoney } from "../../format";
 import { channelLabel } from "./format";
 
 type Line = { item: MenuItem; quantity: number };

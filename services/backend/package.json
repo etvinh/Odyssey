@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250830.0",
+    "@odyssey/shared": "workspace:*",
     "@types/node": "^26.2.0",
     "drizzle-kit": "^0.31.4",
     "tsx": "^4.20.5",

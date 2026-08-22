@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { usePathname, useRouter } from "expo-router";
 import { errorMessage, type OrderRow } from "@odyssey/api-client";
 import { ORDER_STATUSES, type OrderStatus } from "@odyssey/types";
+import { formatMoney, formatTime } from "@odyssey/shared";
 import {
   Button,
   DataTable,
@@ -17,7 +18,6 @@ import {
   Text,
   space,
 } from "@odyssey/ui";
-import { formatMoney, formatTime } from "../../format";
 import { filterOrders, tallyStatuses } from "./filter";
 import { channelLabel, statusLabel, statusTone } from "./format";
 import { OrderCreateDialog } from "./OrderCreateDialog";

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { dayOfWeek, serviceStatus, type OpeningHours } from "@odyssey/types";
+import type { OpeningHours } from "@odyssey/types";
+import { dayOfWeek, serviceStatus } from "../src/service";
 
 /**
  * Pure module, no I/O. The rule the header pill and the Worker both read, so a

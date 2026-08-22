@@ -1,9 +1,6 @@
 import type { OrderChannel, OrderStatus } from "@odyssey/types";
 
-// Re-exported so order screens keep one import for display helpers.
-export { formatMoney, formatTime } from "../../format";
-
-/** Order-specific display labels. Money and time live in ../../format. */
+/** Order-specific display labels. Money and time come from @odyssey/shared. */
 
 const CHANNEL_LABELS: Record<OrderChannel, string> = {
   dine_in: "Dine in",

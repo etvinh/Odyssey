@@ -11,6 +11,7 @@ import {
   type OrderRow,
   type PopularItem,
 } from "@odyssey/api-client";
+import { formatMoney, formatTime } from "@odyssey/shared";
 import {
   Button,
   DataTable,
@@ -28,7 +29,6 @@ import {
   space,
   useToast,
 } from "@odyssey/ui";
-import { formatMoney, formatTime } from "../../format";
 import { filterOrders, tallyStatuses } from "../orders/filter";
 import { useAllOrders } from "../orders/useAllOrders";
 import { actionLabel, statusLabel, statusTone } from "../orders/format";
