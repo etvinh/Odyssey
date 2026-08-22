@@ -4,7 +4,7 @@
     // The Worker runs with nodejs_compat, and scripts/ runs in plain Node,
     // so both type sets are legitimate here.
     "types": ["@cloudflare/workers-types", "node"],
-    "lib": ["ES2022"]
+    "lib": ["ES2023"]
   },
   "include": ["src/**/*.ts", "scripts/**/*.ts", "drizzle.config.ts"]
 }

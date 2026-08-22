@@ -10,7 +10,7 @@
     "seed:reset": "tsx scripts/seed.ts --reset",
     "gen:contract": "tsx scripts/emit-openapi.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "dependencies": {
     "@hono/zod-openapi": "^1.6.1",
