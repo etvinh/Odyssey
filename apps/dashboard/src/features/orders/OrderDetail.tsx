@@ -54,7 +54,12 @@ export function OrderDetail({ id }: { id: string }) {
     },
   });
 
-  const close = () => router.push("/orders");
+  /**
+   * Prefer popping history so the drawer behaves like the panel it looks like:
+   * back and forward stay meaningful. A deep link straight to an order has
+   * nothing to pop, so that case navigates to the list instead.
+   */
+  const close = () => (router.canGoBack() ? router.back() : router.replace("/orders"));
 
   const run = (action: OrderAction) => {
     if (action === "cancel") return setConfirmingCancel(true);

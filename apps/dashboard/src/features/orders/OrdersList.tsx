@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { View } from "react-native";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { errorMessage, useListOrders, type OrderRow } from "@odyssey/api-client";
 import { ORDER_STATUSES, type OrderStatus } from "@odyssey/types";
 import {
@@ -23,6 +23,9 @@ import { OrderCreateDialog } from "./OrderCreateDialog";
 
 export function OrdersList() {
   const router = useRouter();
+  // The open order, read off the URL: the drawer is a route, so the path is
+  // where that lives. Marking the row keeps the drawer anchored to its source.
+  const openOrderId = usePathname().split("/orders/")[1];
   const [status, setStatus] = useState<OrderStatus | "all">("all");
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
@@ -87,6 +90,7 @@ export function OrdersList() {
             caption="Orders"
             rows={page.data}
             keyExtractor={(order) => order.id}
+            selectedKey={openOrderId}
             onRowPress={(order) => router.push(`/orders/${order.id}` as "/orders")}
             emptyState={
               <Surface padded={false}>
