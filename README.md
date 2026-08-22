@@ -87,7 +87,7 @@ packages/ui         design tokens + RN primitives
 
 - **Server-side Client-side rendering.** I made some significant decisions on what gets rendered server-side and what gets rendered client-side in terms of filters:
 
-  - Orders get rendered client-side: I made this choice to speed up filtering in the UI. Realistically, when orders are being processed and looked through in a busy kitchen, speed is of utmost importance. Now, fetching a large amount of orders will significantly slow things down, which is why I decided to only render orders from the past 24 hours, the older orders are archived. On average, restaurants complete 50-600 orders per day so server-side rendering shouldn't be an issue. NOTE THAT IF YOU SEED AN UNREALISTIC AMOUNT OF SAME DAY ORDERS THIS APP WILL BE SLOW AS MOLASSES. <-- PLEASE NOTE THIS JUSTIFICATION BEFORE EVALUATING.
+  - Orders get rendered client-side: I made this choice to speed up filtering in the UI. Realistically, when orders are being processed and looked through in a busy kitchen, speed is of utmost importance. Now, fetching a large amount of orders will significantly slow things down, which is why I decided to only render orders from the past 24 hours, the older orders are archived. On average, restaurants complete 50-600 orders per day so client-side filtering shouldn't be an issue. NOTE THAT IF YOU SEED AN UNREALISTIC AMOUNT OF SAME DAY ORDERS THIS APP WILL BE SLOW AS MOLASSES. <-- PLEASE NOTE THIS JUSTIFICATION BEFORE EVALUATING.
 
   - CRM gets rendered server-side: I decided that this page is more relevant for fetching historical data and therefore is paginated and designed to fetch from a very large table. filters are applied server-side.
 
