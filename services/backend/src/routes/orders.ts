@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-zod";
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { type OrderAction, type OrderStatus } from "@odyssey/types";
 import { customers, menuItems, orderEvents, orderItems, orders, settings } from "../db/schema.js";
 import { releaseDb, type Db } from "../db/client.js";
@@ -15,6 +15,7 @@ import {
 } from "../schemas/error.js";
 import { allowedActions, nextStatus } from "../domain/order-actions.js";
 import { orderRowColumns, toOrderRow } from "../domain/order-rows.js";
+import { activeOrdersSince } from "../domain/order-window.js";
 import { pageWindow } from "../domain/pagination.js";
 import { OrderActionSchema, OrderRow, OrderStatusSchema } from "../schemas/order-row.js";
 
@@ -183,7 +184,7 @@ const listOrders = createRoute({
   },
   responses: {
     200: {
-      description: "Orders, newest first, with live status counts in meta.",
+      description: "Orders from the last 24 hours, newest first. Older orders are archived.",
       content: { "application/json": { schema: OrderList } },
     },
     422: errorResponse("The query parameters did not validate."),
@@ -252,17 +253,28 @@ export const orderRoutes = new OpenAPIHono<AppEnv>()
     try {
       const window = pageWindow(page, pageSize);
 
+      /**
+       * The live window. Older orders are archived — still readable by id and
+       * still counted everywhere they are summed, but out of the working list.
+       * One `since` for both queries, so the page and its total cannot be
+       * computed from two different instants.
+       */
+      const since = activeOrdersSince(new Date());
+      const live = gte(orders.placedAt, since);
+
       const rows = await db
         .select(orderRowColumns)
         .from(orders)
         .leftJoin(customers, eq(orders.customerId, customers.id))
+        .where(live)
         .orderBy(sort === "placedAt.asc" ? asc(orders.placedAt) : desc(orders.placedAt))
         .limit(window.limit)
         .offset(window.offset);
 
       const [counted] = await db
         .select({ total: sql<number>`count(*)`.mapWith(Number) })
-        .from(orders);
+        .from(orders)
+        .where(live);
 
       const data = rows.map(toOrderRow);
 

@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { count } from "drizzle-orm";
+import { count, gte } from "drizzle-orm";
 import { orders } from "../src/db/schema.js";
+import { activeOrdersSince } from "../src/domain/order-window.js";
 import { get, readJson, withDb, type ListEnvelope, type OrderRow } from "./setup.js";
 
 type OrderList = ListEnvelope<OrderRow>;
@@ -84,10 +85,14 @@ describe("GET /orders", () => {
     expect(Object.keys(body.meta).toSorted()).toEqual(["page", "pageSize", "total"]);
   });
 
-  it("totals every order, not just this page", async () => {
+  it("totals every live order, not just this page", async () => {
     // Counted straight from Postgres, so the expected value does not come from
-    // the same query the route uses.
-    const [row] = await withDb((db) => db.select({ n: count() }).from(orders));
+    // the same query the route uses. Archived orders are excluded on both
+    // sides — see orders-archive.test.ts for the window itself.
+    const since = activeOrdersSince(new Date());
+    const [row] = await withDb((db) =>
+      db.select({ n: count() }).from(orders).where(gte(orders.placedAt, since)),
+    );
     expect(body.meta.total).toBe(row!.n);
   });
 });

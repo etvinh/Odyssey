@@ -1283,7 +1283,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Orders, newest first, with live status counts in meta.",
+            "description": "Orders from the last 24 hours, newest first. Older orders are archived.",
             "content": {
               "application/json": {
                 "schema": {
