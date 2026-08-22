@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { View } from "react-native";
 import { usePathname, useRouter } from "expo-router";
-import { errorMessage, useListOrders, type OrderRow } from "@odyssey/api-client";
+import { errorMessage, type OrderRow } from "@odyssey/api-client";
 import { ORDER_STATUSES, type OrderStatus } from "@odyssey/types";
 import {
   Button,
@@ -18,8 +18,10 @@ import {
   space,
 } from "@odyssey/ui";
 import { formatMoney, formatTime } from "../../format";
+import { filterOrders, tallyStatuses } from "./filter";
 import { channelLabel, statusLabel, statusTone } from "./format";
 import { OrderCreateDialog } from "./OrderCreateDialog";
+import { useAllOrders } from "./useAllOrders";
 
 export function OrdersList() {
   const router = useRouter();
@@ -30,22 +32,33 @@ export function OrdersList() {
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
 
-  // Not destructured: TanStack Query v5 narrows `data` through the result
-  // object's discriminated union, and destructuring throws that away.
-  const query = useListOrders({
-    ...(status === "all" ? {} : { status }),
-    ...(search.trim() ? { search: search.trim() } : {}),
-    pageSize: 25,
-  });
+  // Every order, fetched once. Typing in the search box or moving between
+  // status chips is now a re-render, not a request.
+  const query = useAllOrders();
+  const orders = query.data;
 
-  const page = query.data?.status === 200 ? query.data.data : undefined;
-  const counts = page?.meta.statusCounts;
+  /**
+   * The search applied but not the status filter. The chips are counted off
+   * this, so they narrow with the search yet stay whole while a status is
+   * selected — pick "Ready", and "Pending 4" is still there to go back to.
+   */
+  const searched = useMemo(
+    () => (orders ? filterOrders(orders, { status: "all", search }) : undefined),
+    [orders, search],
+  );
+
+  const visible = useMemo(
+    () => (searched ? filterOrders(searched, { status, search: "" }) : undefined),
+    [searched, status],
+  );
+
+  const counts = useMemo(() => (searched ? tallyStatuses(searched) : undefined), [searched]);
 
   return (
     <View>
       <PageHeader
         title="Orders"
-        subtitle={page ? `${page.data.length} of ${page.meta.total} shown` : undefined}
+        subtitle={visible && orders ? `${visible.length} of ${orders.length} shown` : undefined}
         actions={
           <Button label="New order" icon="plus" variant="primary" onPress={() => setCreating(true)} />
         }
@@ -60,7 +73,7 @@ export function OrdersList() {
             value={status}
             onChange={setStatus}
             segments={[
-              { value: "all" as const, label: "All", count: counts ? totalOf(counts) : undefined },
+              { value: "all" as const, label: "All", count: searched?.length },
               ...ORDER_STATUSES.map((option) => ({
                 value: option,
                 label: statusLabel(option),
@@ -85,10 +98,10 @@ export function OrdersList() {
           <Surface padded={false}>
             <ErrorState cause={errorMessage(query.error)} onRetry={() => void query.refetch()} />
           </Surface>
-        ) : page ? (
+        ) : visible ? (
           <DataTable<OrderRow>
             caption="Orders"
-            rows={page.data}
+            rows={visible}
             keyExtractor={(order) => order.id}
             selectedKey={openOrderId}
             onRowPress={(order) => router.push(`/orders/${order.id}` as "/orders")}
@@ -181,9 +194,4 @@ export function OrdersList() {
       </View>
     </View>
   );
-}
-
-/** Every status counted. The server zero-fills, so summing is total. */
-function totalOf(counts: Record<OrderStatus, number>): number {
-  return ORDER_STATUSES.reduce((sum, status) => sum + counts[status], 0);
 }

@@ -4,15 +4,9 @@
  * Odyssey API
  * OpenAPI spec version: 1.0.0
  */
-import type { OrderStatus } from './orderStatus';
 import type { ListOrdersSort } from './listOrdersSort';
 
 export type ListOrdersParams = {
-status?: OrderStatus;
-/**
- * @minLength 1
- */
-search?: string;
 /**
  * @minimum 1
  */

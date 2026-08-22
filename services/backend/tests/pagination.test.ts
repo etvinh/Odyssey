@@ -1,44 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { pageWindow, totalFromCounts } from "../src/domain/pagination.js";
+import { pageWindow } from "../src/domain/pagination.js";
 
 /**
  * Pure module, no I/O. Expected values are worked examples rather than the
  * formula the implementation uses, so these can actually disagree with the code.
  */
-
-describe("totalFromCounts", () => {
-  // A real statusCounts payload. 13+11+9+8+95+14 = 150.
-  const counts = {
-    pending: 13,
-    confirmed: 11,
-    preparing: 9,
-    ready: 8,
-    completed: 95,
-    cancelled: 14,
-  };
-
-  it("sums every bucket when no filter is applied", () => {
-    expect(totalFromCounts(counts)).toBe(150);
-  });
-
-  it("returns one bucket when a filter is applied", () => {
-    expect(totalFromCounts(counts, "pending")).toBe(13);
-  });
-
-  it("returns the bucket even when it is empty", () => {
-    expect(totalFromCounts({ ...counts, ready: 0 }, "ready")).toBe(0);
-  });
-
-  it("totals zero when every bucket is empty", () => {
-    expect(totalFromCounts({ pending: 0, completed: 0 })).toBe(0);
-  });
-
-  it("does not depend on how many rows a page happened to return", () => {
-    // The defect this module exists to remove: the total was previously read
-    // off the returned rows, so an empty page reported nothing.
-    expect(totalFromCounts(counts)).toBe(150);
-  });
-});
 
 describe("pageWindow", () => {
   it("starts at offset zero on the first page", () => {

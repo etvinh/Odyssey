@@ -1,7 +1,9 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { get, readJson, type OrderListMeta, type OrderRow, type OrderStatus } from "./setup.js";
+import { count } from "drizzle-orm";
+import { orders } from "../src/db/schema.js";
+import { get, readJson, withDb, type ListEnvelope, type OrderRow } from "./setup.js";
 
-type OrderList = { data: OrderRow[]; meta: OrderListMeta };
+type OrderList = ListEnvelope<OrderRow>;
 
 describe("GET /orders", () => {
   let response: Response;
@@ -76,48 +78,54 @@ describe("GET /orders", () => {
     expect(terminal.every((order) => order.allowedActions.length === 0)).toBe(true);
   });
 
-  it("counts every status in meta", () => {
-    const statuses: OrderStatus[] = [
-      "pending",
-      "confirmed",
-      "preparing",
-      "ready",
-      "completed",
-      "cancelled",
-    ];
-    expect(Object.keys(body.meta.statusCounts).toSorted()).toEqual(statuses.toSorted());
+  it("carries only the shared list meta", () => {
+    // Status counts moved to the client, which now holds every order. A
+    // server-side tally would be a second source for one number.
+    expect(Object.keys(body.meta).toSorted()).toEqual(["page", "pageSize", "total"]);
   });
 
-  it("totals the status counts to the unfiltered total", () => {
-    const summed = Object.values(body.meta.statusCounts).reduce((a, b) => a + b, 0);
-    expect(summed).toBe(body.meta.total);
+  it("totals every order, not just this page", async () => {
+    // Counted straight from Postgres, so the expected value does not come from
+    // the same query the route uses.
+    const [row] = await withDb((db) => db.select({ n: count() }).from(orders));
+    expect(body.meta.total).toBe(row!.n);
   });
 });
 
 describe("GET /orders?status=pending", () => {
+  // The dashboard filters by status in memory, so the server no longer takes
+  // the parameter. An old caller's query string is ignored, not rejected.
   let body: OrderList;
   let unfiltered: OrderList;
 
   beforeAll(async () => {
-    body = await readJson(await get("/orders?status=pending"));
-    unfiltered = await readJson(await get("/orders"));
+    body = await readJson(await get("/orders?status=pending&pageSize=100"));
+    unfiltered = await readJson(await get("/orders?pageSize=100"));
   });
 
-  it("returns only pending orders", () => {
-    expect(body.data.every((order) => order.status === "pending")).toBe(true);
+  it("responds 200 rather than rejecting the unknown parameter", async () => {
+    expect((await get("/orders?status=pending")).status).toBe(200);
   });
 
-  it("narrows the total to the filtered set", () => {
-    expect(body.meta.total).toBe(unfiltered.meta.statusCounts.pending);
+  it("does not narrow the set", () => {
+    expect(body.data.map((order) => order.id)).toEqual(unfiltered.data.map((order) => order.id));
   });
 
-  it("leaves the status counts whole while filtered", () => {
-    // Home requests ?status=pending but still needs correct counts for its KPI.
-    expect(body.meta.statusCounts).toEqual(unfiltered.meta.statusCounts);
+  it("still returns orders of every status", () => {
+    const statuses = new Set(body.data.map((order) => order.status));
+    expect(statuses.size).toBeGreaterThan(1);
   });
 
-  it("offers confirm first on a pending order", () => {
-    expect(body.data[0]?.allowedActions).toEqual(["confirm", "cancel"]);
+  it("reports the unfiltered total", () => {
+    expect(body.meta.total).toBe(unfiltered.meta.total);
+  });
+});
+
+describe("GET /orders allowed actions", () => {
+  it("offers confirm first on a pending order", async () => {
+    const body = await readJson<OrderList>(await get("/orders?pageSize=100"));
+    const pending = body.data.find((order) => order.status === "pending");
+    expect(pending?.allowedActions).toEqual(["confirm", "cancel"]);
   });
 });
 
@@ -144,43 +152,32 @@ describe("GET /orders pagination and sort", () => {
     expect((await get("/orders?pageSize=500")).status).toBe(422);
   });
 
-  it("rejects an unknown status", async () => {
-    expect((await get("/orders?status=frozen")).status).toBe(422);
+  it("ignores a status parameter it no longer defines", async () => {
+    expect((await get("/orders?status=frozen")).status).toBe(200);
   });
 });
 
 describe("GET /orders?search=", () => {
-  it("finds an order by its order number", async () => {
-    const seeded = await readJson<OrderList>(await get("/orders?pageSize=1"));
-    const target = seeded.data[0]!;
-    const found = await readJson<OrderList>(await get(`/orders?search=${target.orderNumber}`));
-    expect(found.data.map((order) => order.id)).toContain(target.id);
+  // Searching moved to the client alongside the status filter: it matched an
+  // order number or a customer name, both of which the dashboard already holds.
+  let body: OrderList;
+  let unfiltered: OrderList;
+
+  beforeAll(async () => {
+    body = await readJson(await get("/orders?search=zzzznomatch&pageSize=100"));
+    unfiltered = await readJson(await get("/orders?pageSize=100"));
   });
 
-  it("finds orders by customer name", async () => {
-    const seeded = await readJson<OrderList>(await get("/orders?pageSize=50"));
-    const named = seeded.data.find((order) => order.customer)!;
-    const found = await readJson<OrderList>(
-      await get(`/orders?search=${encodeURIComponent(named.customer!.name)}`),
-    );
-    expect(found.data.every((order) => order.customer?.name === named.customer!.name)).toBe(true);
+  it("responds 200 rather than rejecting the unknown parameter", () => {
+    expect(body.data.length).toBeGreaterThan(0);
   });
 
-  it("narrows the status counts to the search", async () => {
-    const all = await readJson<OrderList>(await get("/orders"));
-    const searched = await readJson<OrderList>(await get("/orders?search=zzzznomatch"));
-    const summed = Object.values(searched.meta.statusCounts).reduce((a, b) => a + b, 0);
-    expect(summed).toBeLessThan(all.meta.total);
+  it("does not narrow the set, even for a term nothing matches", () => {
+    expect(body.data.map((order) => order.id)).toEqual(unfiltered.data.map((order) => order.id));
   });
 
-  it("returns an empty page when nothing matches", async () => {
-    const body = await readJson<OrderList>(await get("/orders?search=zzzznomatch"));
-    expect(body.data).toEqual([]);
-  });
-
-  it("reports a zero total when nothing matches", async () => {
-    const body = await readJson<OrderList>(await get("/orders?search=zzzznomatch"));
-    expect(body.meta.total).toBe(0);
+  it("reports the unfiltered total", () => {
+    expect(body.meta.total).toBe(unfiltered.meta.total);
   });
 });
 
@@ -205,17 +202,5 @@ describe("GET /orders on a page past the end", () => {
 
   it("echoes the requested page", () => {
     expect(pastEnd.meta.page).toBe(99);
-  });
-
-  it("keeps the status counts whole", () => {
-    expect(pastEnd.meta.statusCounts).toEqual(firstPage.meta.statusCounts);
-  });
-});
-
-describe("GET /orders past the end of a filtered set", () => {
-  it("reports the filtered total, not zero", async () => {
-    const counts = (await readJson<OrderList>(await get("/orders"))).meta.statusCounts;
-    const pastEnd = await readJson<OrderList>(await get("/orders?status=pending&page=99"));
-    expect(pastEnd.meta.total).toBe(counts.pending);
   });
 });

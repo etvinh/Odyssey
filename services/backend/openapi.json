@@ -254,7 +254,7 @@
             }
           },
           "meta": {
-            "$ref": "#/components/schemas/OrderListMeta"
+            "$ref": "#/components/schemas/ListMeta"
           }
         },
         "required": [
@@ -351,66 +351,6 @@
           "mark_ready",
           "complete",
           "cancel"
-        ]
-      },
-      "OrderListMeta": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ListMeta"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "statusCounts": {
-                "$ref": "#/components/schemas/OrderStatusCounts"
-              }
-            },
-            "required": [
-              "statusCounts"
-            ]
-          }
-        ]
-      },
-      "OrderStatusCounts": {
-        "type": "object",
-        "properties": {
-          "pending": {
-            "type": "integer"
-          },
-          "confirmed": {
-            "type": "integer"
-          },
-          "preparing": {
-            "type": "integer"
-          },
-          "ready": {
-            "type": "integer"
-          },
-          "completed": {
-            "type": "integer"
-          },
-          "cancelled": {
-            "type": "integer"
-          }
-        },
-        "required": [
-          "pending",
-          "confirmed",
-          "preparing",
-          "ready",
-          "completed",
-          "cancelled"
-        ]
-      },
-      "OrderStatus": {
-        "type": "string",
-        "enum": [
-          "pending",
-          "confirmed",
-          "preparing",
-          "ready",
-          "completed",
-          "cancelled"
         ]
       },
       "OrderDetail": {
@@ -566,6 +506,17 @@
         "required": [
           "status",
           "changedAt"
+        ]
+      },
+      "OrderStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "confirmed",
+          "preparing",
+          "ready",
+          "completed",
+          "cancelled"
         ]
       },
       "CreateOrderBody": {
@@ -1117,23 +1068,6 @@
           "Orders"
         ],
         "parameters": [
-          {
-            "schema": {
-              "$ref": "#/components/schemas/OrderStatus"
-            },
-            "required": false,
-            "name": "status",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "required": false,
-            "name": "search",
-            "in": "query"
-          },
           {
             "schema": {
               "type": "integer",

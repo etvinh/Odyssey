@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-zod";
-import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import {
   ORDER_ACTIONS,
   ORDER_STATUSES,
@@ -10,7 +10,7 @@ import {
 import { customers, menuItems, orderEvents, orderItems, orders, settings } from "../db/schema.js";
 import { releaseDb, type Db } from "../db/client.js";
 import type { AppEnv } from "../env.js";
-import { ListMeta, listEnvelope } from "../schemas/envelope.js";
+import { listEnvelope } from "../schemas/envelope.js";
 import {
   errorResponse,
   invalidTransition,
@@ -19,7 +19,7 @@ import {
   validationFailed,
 } from "../schemas/error.js";
 import { allowedActions, nextStatus } from "../domain/order-actions.js";
-import { pageWindow, totalFromCounts } from "../domain/pagination.js";
+import { pageWindow } from "../domain/pagination.js";
 
 /* -------------------------------------------------------------------------- */
 /* Shapes                                                                      */
@@ -83,32 +83,7 @@ const OrderDetail = createSelectSchema(orders)
   })
   .openapi("OrderDetail");
 
-/**
- * Every status, always present. The handler zero-fills, so a total object type
- * is the honest contract — `z.record` would generate every key as optional and
- * push a `?? 0` into every caller for a hole the server never leaves.
- *
- * Built from ORDER_STATUSES rather than typed out, so adding a status cannot
- * silently skip it.
- */
-const OrderStatusCounts = z
-  .object(
-    Object.fromEntries(ORDER_STATUSES.map((status) => [status, z.number().int()])) as Record<
-      OrderStatus,
-      z.ZodNumber
-    >,
-  )
-  .openapi("OrderStatusCounts");
-
-/**
- * Widened meta. `statusCounts` rides along on the list read so the filter bar
- * can show live counts without a second request.
- */
-const OrderListMeta = ListMeta.extend({
-  statusCounts: OrderStatusCounts,
-}).openapi("OrderListMeta");
-
-const OrderList = listEnvelope(OrderRow, "OrderList", OrderListMeta);
+const OrderList = listEnvelope(OrderRow, "OrderList");
 
 /** Attach an existing customer. */
 const OrderCustomerRef = z.object({ id: z.string().uuid() }).openapi("OrderCustomerRef");
@@ -231,8 +206,6 @@ const listOrders = createRoute({
   tags: ["Orders"],
   request: {
     query: z.object({
-      status: OrderStatusSchema.optional(),
-      search: z.string().min(1).optional(),
       page: z.coerce.number().int().min(1).default(1),
       pageSize: z.coerce.number().int().min(1).max(100).default(25),
       sort: z.enum(["placedAt.desc", "placedAt.asc"]).default("placedAt.desc"),
@@ -303,23 +276,10 @@ const applyOrderAction = createRoute({
 
 export const orderRoutes = new OpenAPIHono<AppEnv>()
   .openapi(listOrders, async (c) => {
-    const { status, search, page, pageSize, sort } = c.req.valid("query");
+    const { page, pageSize, sort } = c.req.valid("query");
     const { db, sql: conn } = c.var.createDb(c.env.DATABASE_URL);
 
     try {
-      // Search matches an order number or a customer name. Held separately from
-      // the status filter because statusCounts honours this and ignores that.
-      const searchFilter = search
-        ? or(
-            ilike(customers.name, `%${search}%`),
-            sql`${orders.orderNumber}::text ilike ${`%${search}%`}`,
-          )
-        : undefined;
-
-      const pageFilter = status
-        ? and(searchFilter, eq(orders.status, status))
-        : searchFilter;
-
       const window = pageWindow(page, pageSize);
 
       const rows = await db
@@ -338,28 +298,13 @@ export const orderRoutes = new OpenAPIHono<AppEnv>()
         })
         .from(orders)
         .leftJoin(customers, eq(orders.customerId, customers.id))
-        .where(pageFilter)
         .orderBy(sort === "placedAt.asc" ? asc(orders.placedAt) : desc(orders.placedAt))
         .limit(window.limit)
         .offset(window.offset);
 
-      /**
-       * Counts honour `search` but deliberately ignore `status`, so the filter
-       * chips stay whole while a filter is applied — and so Home's pending KPI
-       * is right even though its request is `?status=pending`.
-       */
-      const counted = await db
-        .select({ status: orders.status, count: sql<number>`count(*)`.mapWith(Number) })
-        .from(orders)
-        .leftJoin(customers, eq(orders.customerId, customers.id))
-        .where(searchFilter)
-        .groupBy(orders.status);
-
-      // Zero-filled, so the shape is total and the UI never checks for a hole.
-      const statusCounts = Object.fromEntries(
-        ORDER_STATUSES.map((s) => [s, 0]),
-      ) as Record<OrderStatus, number>;
-      for (const row of counted) statusCounts[row.status] = row.count;
+      const [counted] = await db
+        .select({ total: sql<number>`count(*)`.mapWith(Number) })
+        .from(orders);
 
       const data = rows.map((row) => ({
         id: row.id,
@@ -376,17 +321,11 @@ export const orderRoutes = new OpenAPIHono<AppEnv>()
       }));
 
       /**
-       * The total comes from the counts, never from the returned rows: a page
-       * past the end has no rows to read a windowed count off, and reporting
-       * zero there strands the pagination footer.
+       * The total is counted independently of paging, never read off the
+       * returned rows: a page past the end has no rows to read a windowed count
+       * off, and reporting zero there strands the pagination footer.
        */
-      return c.json(
-        {
-          data,
-          meta: { total: totalFromCounts(statusCounts, status), page, pageSize, statusCounts },
-        },
-        200,
-      );
+      return c.json({ data, meta: { total: counted?.total ?? 0, page, pageSize } }, 200);
     } finally {
       await releaseDb(c, conn);
     }

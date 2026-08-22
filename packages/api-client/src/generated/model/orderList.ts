@@ -5,9 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { OrderRow } from './orderRow';
-import type { OrderListMeta } from './orderListMeta';
+import type { ListMeta } from './listMeta';
 
 export interface OrderList {
   data: OrderRow[];
-  meta: OrderListMeta;
+  meta: ListMeta;
 }

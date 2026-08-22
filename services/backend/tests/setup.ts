@@ -144,13 +144,6 @@ export type OrderDetail = {
   allowedActions: OrderAction[];
 };
 
-export type OrderListMeta = {
-  total: number;
-  page: number;
-  pageSize: number;
-  statusCounts: Record<OrderStatus, number>;
-};
-
 /**
  * Read straight from Postgres, for checking things the API deliberately hides —
  * that a rejected order left no customer behind, for instance.

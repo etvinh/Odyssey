@@ -91,15 +91,11 @@ describe("OpenAPI document", () => {
     expect(doc.components.schemas.OrderDetail?.required).toContain("allowedActions");
   });
 
-  it("carries every status in the counts, none optional", () => {
-    expect(doc.components.schemas.OrderStatusCounts?.required).toEqual([
-      "pending",
-      "confirmed",
-      "preparing",
-      "ready",
-      "completed",
-      "cancelled",
-    ]);
+  it("no longer publishes a server-side status tally", () => {
+    // The dashboard holds every order and counts them itself. A tally here too
+    // would be a second source for one number.
+    expect(doc.components.schemas.OrderStatusCounts).toBeUndefined();
+    expect(doc.components.schemas.OrderListMeta).toBeUndefined();
   });
 
   it("defines the error envelope the client already parses", () => {
