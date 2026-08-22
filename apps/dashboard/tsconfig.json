@@ -16,6 +16,7 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "tests/**/*.ts",
+    "../../packages/ui/src/assets.d.ts",
     "*.ts",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"

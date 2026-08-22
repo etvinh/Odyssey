@@ -1,7 +1,8 @@
 import { View } from "react-native";
+import { Icon } from "./Icon";
 import { Surface } from "./Surface";
 import { Text } from "./Text";
-import { space } from "./tokens";
+import { color, space } from "./tokens";
 
 export type Trend = "up" | "down" | "flat";
 
@@ -30,8 +31,13 @@ export function KpiStat({
   /** Whether the movement is good, bad, or neither. Defaults to neither. */
   tone?: "neutral" | "positive" | "negative";
 }) {
-  const arrow = trend === "up" ? "▲" : trend === "down" ? "▼" : "•";
-  const deltaTone = tone === "positive" ? "success" : tone === "negative" ? "danger" : "subtle";
+  const mark = trend === "up" ? "trendUp" : trend === "down" ? "trendDown" : "trendFlat";
+  const markColor =
+    tone === "positive"
+      ? color.successForeground
+      : tone === "negative"
+        ? color.dangerForeground
+        : color.foregroundSubtle;
 
   return (
     <Surface style={{ flex: 1, minWidth: 200 }}>
@@ -42,9 +48,7 @@ export function KpiStat({
         <Text variant="kpi">{value}</Text>
         {context ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: space[1] }}>
-            <Text variant="caption" tone={deltaTone}>
-              {arrow}
-            </Text>
+            <Icon name={mark} size={13} color={markColor} />
             <Text variant="caption" tone="muted">
               {context}
             </Text>

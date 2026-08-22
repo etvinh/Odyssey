@@ -189,7 +189,7 @@ export function Switch({
       onValueChange={onValueChange}
       disabled={disabled}
       accessibilityLabel={label}
-      trackColor={{ false: color.borderStrong, true: color.accent }}
+      trackColor={{ false: color.borderStrong, true: color.toggleOn }}
       thumbColor={color.surface}
       // RNW renders the track from activeThumbColor/ios_backgroundColor too.
       ios_backgroundColor={color.borderStrong}

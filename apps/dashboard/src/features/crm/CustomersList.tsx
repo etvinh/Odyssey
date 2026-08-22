@@ -54,7 +54,6 @@ export function CustomersList() {
 
       <View style={{ gap: space[4] }}>
         <View style={{ flexDirection: "row", gap: space[3], alignItems: "center" }}>
-          <View style={{ flex: 1 }} />
           <SearchField
             value={search}
             // Back to page one on every edit: a narrower search can leave the
@@ -67,6 +66,7 @@ export function CustomersList() {
             placeholder="Name, phone or email"
             width={280}
           />
+          <View style={{ flex: 1 }} />
         </View>
 
         {query.isPending ? (

@@ -68,6 +68,12 @@ export function OrdersList() {
 
       <View style={{ gap: space[4] }}>
         <View style={{ flexDirection: "row", gap: space[3], flexWrap: "wrap", alignItems: "center" }}>
+          <SearchField
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Order number or customer"
+            width={280}
+          />
           <SegmentedControl
             label="Filter by status"
             value={status}
@@ -82,12 +88,6 @@ export function OrdersList() {
             ]}
           />
           <View style={{ flex: 1 }} />
-          <SearchField
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Order number or customer"
-            width={280}
-          />
         </View>
 
         {query.isPending ? (

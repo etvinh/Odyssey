@@ -1,15 +1,16 @@
+import { useFonts } from "expo-font";
 import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  useFonts,
-} from "@expo-google-fonts/inter";
+  IBMPlexSans_400Regular,
+  IBMPlexSans_500Medium,
+  IBMPlexSans_600SemiBold,
+} from "@expo-google-fonts/ibm-plex-sans";
+import { IBMPlexMono_400Regular, IBMPlexMono_500Medium } from "@expo-google-fonts/ibm-plex-mono";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useGetSettings } from "@odyssey/api-client";
+import { serviceStatus } from "@odyssey/types";
 import { Slot, usePathname, useRouter } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
-import { useGetSettings } from "@odyssey/api-client";
-import { serviceStatus } from "@odyssey/types";
 import { AppShell, ToastProvider, color, type NavItem } from "@odyssey/ui";
 
 /** The five surfaces of the product, in the order a manager works through them. */
@@ -27,10 +28,16 @@ export default function RootLayout() {
     () => new QueryClient({ defaultOptions: { queries: { retry: 1 } } }),
   );
 
-  const [fontsLoaded] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold });
+  const [fontsLoaded] = useFonts({
+    IBMPlexSans_400Regular,
+    IBMPlexSans_500Medium,
+    IBMPlexSans_600SemiBold,
+    IBMPlexMono_400Regular,
+    IBMPlexMono_500Medium,
+  });
 
-  // Holding the frame until the face is ready avoids the reflow that a swap
-  // from the system font to Inter would cause on every text node at once.
+  // Holding the frame until the faces are ready avoids the reflow that a swap
+  // from the system font would cause on every text node at once.
   if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: color.surface }} />;
 
   return (
@@ -45,9 +52,8 @@ export default function RootLayout() {
 }
 
 /**
- * The shell, inside the QueryClientProvider so the service pill can read the
- * settings it derives from. Split out rather than inlined because a hook cannot
- * run above the provider that serves it.
+ * Split out so the router and query hooks run inside the providers above — a
+ * hook cannot read a provider it is rendered beside.
  */
 function Shell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -57,18 +63,21 @@ function Shell({ children }: { children: React.ReactNode }) {
   const settings = query.data?.status === 200 ? query.data.data : undefined;
 
   /**
-   * Derived, never stored — and derived through the same util the Worker uses,
-   * so the pill and the backend cannot disagree about whether the door is open.
+   * Derived, never stored — and through the same util the Worker uses, so the
+   * sidebar and the backend cannot disagree about whether the door is open.
    */
   const status = settings ? serviceStatus(settings, new Date()) : undefined;
 
-  const label = !status
-    ? "Service"
+  /** The pill holds one word; the reason goes on the line beneath it. */
+  const label = !status ? "Checking…" : status.isOpen ? "Open" : "Closed";
+
+  const detail = !status
+    ? undefined
     : status.reason === "not_accepting"
       ? "Not accepting orders"
       : status.isOpen
-        ? `Open · ${settings!.prepTimeMinutes} min`
-        : "Closed";
+        ? `${settings!.prepTimeMinutes} min prep time`
+        : "Outside opening hours";
 
   return (
     <AppShell
@@ -76,6 +85,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       activeHref={pathname}
       onNavigate={(href) => router.push(href as "/orders")}
       serviceLabel={label}
+      serviceDetail={detail}
       serviceOpen={status?.isOpen ?? false}
     >
       {children}

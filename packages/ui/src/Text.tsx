@@ -12,7 +12,7 @@ const tones = {
   default: color.foreground,
   muted: color.foregroundMuted,
   subtle: color.foregroundSubtle,
-  accent: color.accent,
+  accent: color.accentText,
   danger: color.dangerForeground,
   success: color.successForeground,
   inverse: color.accentForeground,

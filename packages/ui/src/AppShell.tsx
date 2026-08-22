@@ -1,5 +1,7 @@
 import { ScrollView, View, useWindowDimensions, type ViewStyle } from "react-native";
 import { Icon, type IconName } from "./Icon";
+import { Clock } from "./Clock";
+import { Logo, Logomark } from "./Logo";
 import { Interactive, focusRing } from "./Pressable";
 import { Text } from "./Text";
 import { StatusBadge } from "./StatusBadge";
@@ -16,16 +18,20 @@ export type NavItem = { href: string; label: string; icon: IconName; badge?: num
 export function AppShell({
   items,
   activeHref,
-  onNavigate,
   serviceLabel,
+  serviceDetail,
   serviceOpen,
+  onNavigate,
   children,
 }: {
   items: NavItem[];
   activeHref: string;
-  onNavigate: (href: string) => void;
+  /** The service state, shown at the foot of the sidebar. */
   serviceLabel?: string;
+  /** Its supporting line — prep time, or why the door is shut. */
+  serviceDetail?: string;
   serviceOpen?: boolean;
+  onNavigate: (href: string) => void;
   children: React.ReactNode;
 }) {
   const { width } = useWindowDimensions();
@@ -79,12 +85,54 @@ export function AppShell({
     </View>
   );
 
+  /**
+   * The top bar has one line to work with, so the mark carries the brand and
+   * the name is set in type beside it.
+   */
   const brand = (
     <View style={{ flexDirection: "row", alignItems: "center", gap: space[2] }}>
-      <Text variant="subheading">Odyssey</Text>
-      {serviceLabel ? (
-        <StatusBadge label={serviceLabel} tone={serviceOpen ? "success" : "neutral"} />
+      <Logomark size={24} />
+      <Text variant="subheading" style={{ letterSpacing: 0.2 }}>
+        Odyssey
+      </Text>
+    </View>
+  );
+
+  /**
+   * The sidebar has the width for the lockup as drawn, so the wordmark comes
+   * from the artwork rather than being set again in the interface face beside
+   * it — two versions of the same word in two typefaces is the tell of a logo
+   * dropped in rather than placed.
+   */
+  /**
+   * The foot of the sidebar: ambient state, not a control.
+   *
+   * Down here rather than beside the wordmark because it is a thing to glance
+   * at when you wonder, not a thing to read on arrival — and the bottom of a
+   * fixed rail is where a status line is looked for.
+   */
+  const serviceFooter = serviceLabel ? (
+    <View
+      style={{
+        gap: space[2],
+        paddingTop: space[3],
+        borderTopWidth: borderWidth.hairline,
+        borderTopColor: color.border,
+      }}
+    >
+      <StatusBadge label={serviceLabel} tone={serviceOpen ? "success" : "neutral"} />
+      {serviceDetail ? (
+        <Text variant="caption" tone="subtle">
+          {serviceDetail}
+        </Text>
       ) : null}
+    </View>
+  ) : null;
+
+  const sidebarBrand = (
+    <View style={{ gap: space[3], paddingHorizontal: space[1], paddingBottom: space[1] }}>
+      <Logo height={78} />
+      <Clock />
     </View>
   );
 
@@ -102,6 +150,7 @@ export function AppShell({
         >
           {brand}
           {nav}
+          {serviceFooter}
         </View>
         <ScrollView contentContainerStyle={{ padding: space[4] }}>{children}</ScrollView>
       </View>
@@ -120,8 +169,14 @@ export function AppShell({
           backgroundColor: color.surfaceSunken,
         }}
       >
-        <View style={{ paddingHorizontal: space[3], paddingTop: space[2] }}>{brand}</View>
+        <View style={{ paddingHorizontal: space[3], paddingTop: space[2] }}>{sidebarBrand}</View>
         {nav}
+        {/* Takes the slack, so the footer sits on the floor of the rail
+            however few nav items there are. */}
+        <View style={{ flex: 1 }} />
+        <View style={{ paddingHorizontal: space[3], paddingBottom: space[1] }}>
+          {serviceFooter}
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: space[8], alignItems: "center" }}>
