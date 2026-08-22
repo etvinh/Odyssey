@@ -42,15 +42,38 @@ describe("OpenAPI document", () => {
     ]);
   });
 
+  it("documents every menu operation", () => {
+    expect(
+      Object.keys(doc.paths)
+        .filter((path) => path.includes("/menu/"))
+        .toSorted(),
+    ).toEqual([
+      "/api/v1/menu/categories",
+      "/api/v1/menu/categories/{id}",
+      "/api/v1/menu/items",
+      "/api/v1/menu/items/{id}",
+    ]);
+  });
+
+  it("keeps deletedAt off the menu item shape", () => {
+    // A removed item vanishes from every read, so the field would always be
+    // null on the wire and would only invite clients to reason about removal.
+    expect(Object.keys(doc.components.schemas.MenuItem?.properties ?? {}).toSorted()).toEqual([
+      "categoryId",
+      "description",
+      "id",
+      "isAvailable",
+      "name",
+      "priceCents",
+    ]);
+  });
+
   it("documents every orders operation", () => {
-    expect(Object.keys(doc.paths).toSorted()).toEqual(
-      [
-        "/api/v1/menu/categories",
-        "/api/v1/orders",
-        "/api/v1/orders/{id}",
-        "/api/v1/orders/{id}/actions",
-      ].toSorted(),
-    );
+    expect(
+      Object.keys(doc.paths)
+        .filter((path) => path.includes("/orders"))
+        .toSorted(),
+    ).toEqual(["/api/v1/orders", "/api/v1/orders/{id}", "/api/v1/orders/{id}/actions"]);
   });
 
   it("types an order number as a string, not the integer column", () => {

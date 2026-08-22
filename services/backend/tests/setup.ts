@@ -61,6 +61,15 @@ export type ListEnvelope<T> = {
   meta: { total: number; page: number; pageSize: number };
 };
 
+export type MenuItem = {
+  id: string;
+  categoryId: string;
+  name: string;
+  description: string | null;
+  priceCents: number;
+  isAvailable: boolean;
+};
+
 export type MenuCategory = {
   id: string;
   name: string;
@@ -201,6 +210,8 @@ export async function createPendingOrder(): Promise<OrderDetail> {
 export type RolledBackClient = {
   get: (path: string) => Promise<Response>;
   post: (path: string, body: unknown) => Promise<Response>;
+  patch: (path: string, body: unknown) => Promise<Response>;
+  del: (path: string) => Promise<Response>;
 };
 
 /** Thrown to abort the transaction once the body has run. Never escapes. */
@@ -229,14 +240,18 @@ export async function withRolledBackApp(
       const call = async (path: string, init?: RequestInit): Promise<Response> =>
         app.request(`/api/v1${path}`, init, { DATABASE_URL }, executionCtx);
 
+      const send = (method: string) => (path: string, body: unknown) =>
+        call(path, {
+          method,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
       await fn({
         get: (path) => call(path),
-        post: (path, body) =>
-          call(path, {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify(body),
-          }),
+        post: send("POST"),
+        patch: send("PATCH"),
+        del: (path) => call(path, { method: "DELETE" }),
       });
 
       throw new Rollback();
