@@ -8,6 +8,12 @@ build/
 coverage/
 *.tgz
 
+# Expo rewrites apps/dashboard/.gitignore on every start, purely to ignore
+# expo-env.d.ts. Covered here instead, and its copy is ignored, so the repo
+# keeps a single .gitignore.
+expo-env.d.ts
+apps/dashboard/.gitignore
+
 # Tool caches
 .turbo/
 .expo/
