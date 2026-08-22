@@ -1,9 +1,9 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-zod";
-import { asc } from "drizzle-orm";
-import { menuCategories } from "../db/schema.js";
-import { createDb } from "../db/client.js";
-import type { Env } from "../env.js";
+import { asc, eq, isNull, sql } from "drizzle-orm";
+import { menuCategories, menuItems } from "../db/schema.js";
+import { releaseDb } from "../db/client.js";
+import type { AppEnv } from "../env.js";
 import { listEnvelope } from "../schemas/envelope.js";
 
 /** Shape derived from the Drizzle table — not hand-written. */
@@ -25,42 +25,34 @@ const listMenuCategories = createRoute({
   },
 });
 
-export const menuRoutes = new OpenAPIHono<{ Bindings: Env }>().openapi(
+export const menuRoutes = new OpenAPIHono<AppEnv>().openapi(
   listMenuCategories,
   async (c) => {
-    const { db, sql } = createDb(c.env.DATABASE_URL);
+    const { db, sql: conn } = c.var.createDb(c.env.DATABASE_URL);
     try {
-      const rows = await db
+      // itemCount is derived, never stored, and counts only what can still be
+      // ordered — a removed item leaves the count while its row survives so
+      // past orders stay intact.
+      const data = await db
         .select({
           id: menuCategories.id,
           name: menuCategories.name,
           sortOrder: menuCategories.sortOrder,
+          itemCount: sql<number>`(
+            select count(*) from ${menuItems}
+            where ${eq(menuItems.categoryId, menuCategories.id)}
+              and ${isNull(menuItems.deletedAt)}
+          )`.mapWith(Number),
         })
         .from(menuCategories)
         .orderBy(asc(menuCategories.sortOrder), asc(menuCategories.name));
-
-      // itemCount is derived, never stored — menu_items lands in Stage 1.
-      const data = rows.map((r) => ({
-        id: r.id,
-        name: r.name,
-        sortOrder: r.sortOrder,
-        itemCount: 0,
-      }));
 
       return c.json(
         { data, meta: { total: data.length, page: 1, pageSize: data.length } },
         200,
       );
     } finally {
-      // Hono's executionCtx getter throws when the app is invoked without
-      // one (app.request with no ctx, a Node adapter), which would turn a
-      // good response into a 500 and mask the real error.
-      const close = sql.end();
-      try {
-        c.executionCtx.waitUntil(close);
-      } catch {
-        await close;
-      }
+      await releaseDb(c, conn);
     }
   },
 );

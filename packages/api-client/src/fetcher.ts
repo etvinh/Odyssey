@@ -11,8 +11,15 @@
  *     invalidating every cache entry.
  */
 
-/** The error envelope every non-2xx response carries. */
-export type ApiErrorBody = {
+/**
+ * The error envelope every non-2xx response carries.
+ *
+ * Deliberately not exported: the backend now declares this shape in the OpenAPI
+ * document, so `ApiErrorBody` reaches consumers from ./generated/model. This
+ * local copy exists only because the mutator cannot import generated code —
+ * it is what the generated code is built around.
+ */
+type ApiErrorEnvelope = {
   error: { code: string; message: string; fields?: Record<string, string> };
 };
 
@@ -62,7 +69,7 @@ export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   }
 
   if (!response.ok) {
-    const envelope = body as Partial<ApiErrorBody> | undefined;
+    const envelope = body as Partial<ApiErrorEnvelope> | undefined;
     throw new ApiError(
       response.status,
       envelope?.error?.code ?? "UNKNOWN",
@@ -72,4 +79,23 @@ export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   }
 
   return { data: body, status: response.status, headers: response.headers } as T;
+}
+
+/**
+ * Narrow whatever React Query handed you to an ApiError.
+ *
+ * Needed because the generated hooks type `TError` from the OpenAPI document's
+ * error responses — i.e. the *wire* shape, `{ error: { code, message } }` —
+ * while what actually reaches the error branch is the ApiError this module
+ * throws, which flattens that envelope. Orval has no way to know the mutator
+ * transforms it. Take `unknown` and narrow here rather than teaching every
+ * screen to distrust its own types.
+ */
+export function toApiError(error: unknown): ApiError | undefined {
+  return error instanceof ApiError ? error : undefined;
+}
+
+/** The message to show a person for a failed request. */
+export function errorMessage(error: unknown, fallback = "Something went wrong."): string {
+  return toApiError(error)?.message ?? fallback;
 }

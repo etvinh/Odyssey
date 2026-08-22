@@ -42,6 +42,9 @@ importers:
       '@odyssey/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@odyssey/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@tanstack/react-query':
         specifier: ^5.87.1
         version: 5.101.4(react@19.2.3)
@@ -113,11 +116,20 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
+  packages/types:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
   services/backend:
     dependencies:
       '@hono/zod-openapi':
         specifier: ^1.6.1
         version: 1.6.1(hono@4.13.3)(zod@4.4.3)
+      '@odyssey/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       drizzle-orm:
         specifier: ^0.44.5
         version: 0.44.7(@cloudflare/workers-types@4.20260702.1)(postgres@3.4.9)

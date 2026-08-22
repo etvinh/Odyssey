@@ -9,6 +9,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~57.0.12",
     "@odyssey/api-client": "workspace:*",
+    "@odyssey/types": "workspace:*",
     "@tanstack/react-query": "^5.87.1",
     "expo": "^57.0.15",
     "expo-constants": "~57.0.13",

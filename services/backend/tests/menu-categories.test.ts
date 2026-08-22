@@ -1,5 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { get, readJson, type ListEnvelope, type MenuCategory } from "./setup.js";
+import { get, readJson, withDb, type ListEnvelope, type MenuCategory } from "./setup.js";
+import { menuItems } from "../src/db/schema.js";
+import { and, eq, isNull } from "drizzle-orm";
 
 describe("GET /menu/categories", () => {
   let response: Response;
@@ -40,5 +42,55 @@ describe("GET /menu/categories", () => {
         itemCount: expect.any(Number),
       })),
     );
+  });
+});
+
+describe("GET /menu/categories itemCount", () => {
+  let body: ListEnvelope<MenuCategory>;
+
+  beforeAll(async () => {
+    body = await readJson(await get("/menu/categories"));
+  });
+
+  it("counts the items a category actually holds", () => {
+    // The seed puts ~40 items across the categories, so a hard-coded zero
+    // everywhere is the failure this exists to catch.
+    expect(body.data.some((category) => category.itemCount > 0)).toBe(true);
+  });
+
+  it("reports zero for a category holding nothing", () => {
+    // The seed keeps one category empty so the per-category empty state is
+    // reachable.
+    expect(body.data.some((category) => category.itemCount === 0)).toBe(true);
+  });
+
+  it("leaves a removed item out of the count", async () => {
+    const target = body.data.find((category) => category.itemCount > 0)!;
+
+    const [item] = await withDb((db) =>
+      db
+        .select({ id: menuItems.id })
+        .from(menuItems)
+        .where(and(eq(menuItems.categoryId, target.id), isNull(menuItems.deletedAt)))
+        .limit(1),
+    );
+
+    try {
+      await withDb((db) =>
+        db
+          .update(menuItems)
+          .set({ deletedAt: new Date() })
+          .where(eq(menuItems.id, item!.id)),
+      );
+
+      const after = await readJson<ListEnvelope<MenuCategory>>(await get("/menu/categories"));
+      const counted = after.data.find((category) => category.id === target.id)!;
+      expect(counted.itemCount).toBe(target.itemCount - 1);
+    } finally {
+      // Removal is soft, so the row is still there to put back.
+      await withDb((db) =>
+        db.update(menuItems).set({ deletedAt: null }).where(eq(menuItems.id, item!.id)),
+      );
+    }
   });
 });

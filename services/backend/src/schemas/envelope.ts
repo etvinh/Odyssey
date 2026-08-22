@@ -12,6 +12,15 @@ export const ListMeta = z
   })
   .openapi("ListMeta");
 
-export function listEnvelope<T extends z.ZodTypeAny>(item: T, name: string) {
-  return z.object({ data: z.array(item), meta: ListMeta }).openapi(name);
+/**
+ * `meta` defaults to ListMeta and is overridable so an endpoint can widen it —
+ * see OrderListMeta in routes/orders.ts. A widened meta needs its own
+ * `.openapi()` name or it overwrites ListMeta in components.schemas.
+ */
+export function listEnvelope<T extends z.ZodTypeAny>(
+  item: T,
+  name: string,
+  meta: z.ZodTypeAny = ListMeta,
+) {
+  return z.object({ data: z.array(item), meta }).openapi(name);
 }

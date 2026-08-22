@@ -42,6 +42,47 @@ describe("OpenAPI document", () => {
     ]);
   });
 
+  it("documents every orders operation", () => {
+    expect(Object.keys(doc.paths).toSorted()).toEqual(
+      [
+        "/api/v1/menu/categories",
+        "/api/v1/orders",
+        "/api/v1/orders/{id}",
+        "/api/v1/orders/{id}/actions",
+      ].toSorted(),
+    );
+  });
+
+  it("types an order number as a string, not the integer column", () => {
+    // It is a display identifier, not a number to do arithmetic on.
+    expect(doc.components.schemas.OrderRow?.properties?.orderNumber?.type).toBe("string");
+  });
+
+  it("requires allowedActions on the list row, not just the detail read", () => {
+    // ADR-0003. Losing this field is how the state machine gets re-implemented
+    // on the client, so it is asserted rather than assumed.
+    expect(doc.components.schemas.OrderRow?.required).toContain("allowedActions");
+  });
+
+  it("requires allowedActions on the detail read", () => {
+    expect(doc.components.schemas.OrderDetail?.required).toContain("allowedActions");
+  });
+
+  it("carries every status in the counts, none optional", () => {
+    expect(doc.components.schemas.OrderStatusCounts?.required).toEqual([
+      "pending",
+      "confirmed",
+      "preparing",
+      "ready",
+      "completed",
+      "cancelled",
+    ]);
+  });
+
+  it("defines the error envelope the client already parses", () => {
+    expect(Object.keys(doc.components.schemas.ApiErrorBody?.properties ?? {})).toEqual(["error"]);
+  });
+
   it("defines the shared list envelope", () => {
     expect(Object.keys(doc.components.schemas.ListMeta?.properties ?? {})).toEqual([
       "total",
