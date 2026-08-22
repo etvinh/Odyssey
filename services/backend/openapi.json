@@ -682,6 +682,34 @@
           "totalSpendCents",
           "lastOrderAt"
         ]
+      },
+      "CustomerDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Customer"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "preferences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "recentOrders": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/OrderRow"
+                }
+              }
+            },
+            "required": [
+              "preferences",
+              "recentOrders"
+            ]
+          }
+        ]
       }
     },
     "parameters": {}
@@ -1363,6 +1391,58 @@
           },
           "422": {
             "description": "The query parameters did not validate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customers/{id}": {
+      "get": {
+        "operationId": "getCustomer",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0f8fad5b-d9cb-469f-a165-70867728950e"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One customer, with their preferences and recent orders.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No customer with that id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The id was not a uuid.",
             "content": {
               "application/json": {
                 "schema": {

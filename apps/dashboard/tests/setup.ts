@@ -1,4 +1,4 @@
-import type { OrderRow } from "@odyssey/api-client";
+import type { Customer, OrderRow } from "@odyssey/api-client";
 
 /**
  * Shared test environment. Registered as vitest `setupFiles`, and the single
@@ -23,6 +23,20 @@ export function orderRow(overrides: Partial<OrderRow> = {}): OrderRow {
     totalCents: 1000,
     placedAt: "2026-08-22T12:00:00.000Z",
     allowedActions: [],
+    ...overrides,
+  };
+}
+
+/** A customer row, with only the fields a test cares about spelled out. */
+export function customerRow(overrides: Partial<Customer> = {}): Customer {
+  return {
+    id: `customer-${overrides.name ?? "1"}`,
+    name: "Priya Raman",
+    phone: null,
+    email: null,
+    orderCount: 0,
+    totalSpendCents: 0,
+    lastOrderAt: null,
     ...overrides,
   };
 }

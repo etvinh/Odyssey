@@ -15,6 +15,8 @@ export * from './createOrderBodyChannel';
 export * from './createOrderBodyCustomer';
 export * from './createOrderBodyItemsItem';
 export * from './customer';
+export * from './customerDetail';
+export * from './customerDetailAllOf';
 export * from './customerEmail';
 export * from './customerLastOrderAt';
 export * from './customerList';

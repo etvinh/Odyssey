@@ -28,6 +28,7 @@ import type {
   CreateMenuCategoryBody,
   CreateMenuItemBody,
   CreateOrderBody,
+  CustomerDetail,
   CustomerList,
   ListCustomersParams,
   ListMenuItemsParams,
@@ -1346,6 +1347,125 @@ export function useListCustomers<TData = Awaited<ReturnType<typeof listCustomers
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListCustomersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+
+export type getCustomerResponse200 = {
+  data: CustomerDetail
+  status: 200
+}
+
+export type getCustomerResponse404 = {
+  data: ApiErrorBody
+  status: 404
+}
+
+export type getCustomerResponse422 = {
+  data: ApiErrorBody
+  status: 422
+}
+    
+export type getCustomerResponseSuccess = (getCustomerResponse200) & {
+  headers: Headers;
+};
+export type getCustomerResponseError = (getCustomerResponse404 | getCustomerResponse422) & {
+  headers: Headers;
+};
+
+export type getCustomerResponse = (getCustomerResponseSuccess | getCustomerResponseError)
+
+export const getGetCustomerUrl = (id: string,) => {
+
+
+  
+
+  return `/api/v1/customers/${id}`
+}
+
+export const getCustomer = async (id: string, options?: RequestInit): Promise<getCustomerResponse> => {
+  
+  return apiFetch<getCustomerResponse>(getGetCustomerUrl(id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getGetCustomerQueryKey = (id?: string,) => {
+    return [
+    `/api/v1/customers/${id}`
+    ] as const;
+    }
+
+    
+export const getGetCustomerQueryOptions = <TData = Awaited<ReturnType<typeof getCustomer>>, TError = ApiErrorBody>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomer>>> = ({ signal }) => getCustomer(id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCustomerQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomer>>>
+export type GetCustomerQueryError = ApiErrorBody
+
+
+export function useGetCustomer<TData = Awaited<ReturnType<typeof getCustomer>>, TError = ApiErrorBody>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCustomer>>,
+          TError,
+          Awaited<ReturnType<typeof getCustomer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCustomer<TData = Awaited<ReturnType<typeof getCustomer>>, TError = ApiErrorBody>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCustomer>>,
+          TError,
+          Awaited<ReturnType<typeof getCustomer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCustomer<TData = Awaited<ReturnType<typeof getCustomer>>, TError = ApiErrorBody>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetCustomer<TData = Awaited<ReturnType<typeof getCustomer>>, TError = ApiErrorBody>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCustomerQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

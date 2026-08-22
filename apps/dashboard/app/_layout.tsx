@@ -11,13 +11,14 @@ import { View } from "react-native";
 import { AppShell, ToastProvider, color, type NavItem } from "@odyssey/ui";
 
 /**
- * The five surfaces. Menu and Orders are built; the rest arrive with their
+ * The five surfaces. Orders, Menu and CRM are built; the rest arrive with their
  * backends, and listing them here rather than hiding them keeps the shell's
  * shape honest about what the product is.
  */
 const NAV: NavItem[] = [
   { href: "/orders", label: "Orders", icon: "clipboard" },
   { href: "/menu", label: "Menu", icon: "book" },
+  { href: "/crm", label: "Customers", icon: "users" },
   { href: "/ui-library", label: "UI library", icon: "layers" },
 ];
 

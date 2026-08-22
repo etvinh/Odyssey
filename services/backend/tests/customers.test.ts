@@ -5,6 +5,7 @@ import {
   withRolledBackApp,
   type ListEnvelope,
   type OrderDetail,
+  type OrderRow,
 } from "./setup.js";
 
 type Customer = {
@@ -18,6 +19,9 @@ type Customer = {
 };
 
 type CustomerList = ListEnvelope<Customer>;
+
+/** The list row, widened with what only the drawer needs. */
+type CustomerDetail = Customer & { preferences: string[]; recentOrders: OrderRow[] };
 
 describe("GET /customers", () => {
   it("returns the seeded customers", async () => {
@@ -182,6 +186,104 @@ describe("GET /customers", () => {
 
       const after = await readJson<CustomerList>(await client.get("/customers"));
       expect(after.meta.total).toBe(before.meta.total + 1);
+    });
+  });
+});
+
+describe("GET /customers/{id}", () => {
+  it("responds 200 for a customer that exists", async () => {
+    await withRolledBackApp(async (client) => {
+      const list = await readJson<CustomerList>(await client.get("/customers"));
+      const response = await client.get(`/customers/${list.data[0]!.id}`);
+      expect(response.status).toBe(200);
+    });
+  });
+
+  it("carries the derived totals the list row already had", async () => {
+    await withRolledBackApp(async (client) => {
+      const list = await readJson<CustomerList>(await client.get("/customers"));
+      const row = list.data[0]!;
+      const detail = await readJson<CustomerDetail>(await client.get(`/customers/${row.id}`));
+      expect({
+        id: detail.id,
+        name: detail.name,
+        orderCount: detail.orderCount,
+        totalSpendCents: detail.totalSpendCents,
+        lastOrderAt: detail.lastOrderAt,
+      }).toEqual({
+        id: row.id,
+        name: row.name,
+        orderCount: row.orderCount,
+        totalSpendCents: row.totalSpendCents,
+        lastOrderAt: row.lastOrderAt,
+      });
+    });
+  });
+
+  it("carries preferences, which the list row does not", async () => {
+    await withRolledBackApp(async (client) => {
+      const list = await readJson<CustomerList>(await client.get("/customers"));
+      const detail = await readJson<CustomerDetail>(
+        await client.get(`/customers/${list.data[0]!.id}`),
+      );
+      expect(Array.isArray(detail.preferences)).toBe(true);
+    });
+  });
+
+  it("shapes a recent order exactly like a GET /orders row", async () => {
+    // API.md: a bespoke subset here would be a third order shape in the
+    // contract, for rows that are already clickable into a real order.
+    await withRolledBackApp(async (client) => {
+      const list = await readJson<CustomerList>(await client.get("/customers"));
+      const withOrders = list.data.find((customer) => customer.orderCount > 0)!;
+      const detail = await readJson<CustomerDetail>(
+        await client.get(`/customers/${withOrders.id}`),
+      );
+      expect(Object.keys(detail.recentOrders[0]!).toSorted()).toEqual([
+        "allowedActions",
+        "channel",
+        "customer",
+        "id",
+        "itemCount",
+        "orderNumber",
+        "placedAt",
+        "status",
+        "totalCents",
+      ]);
+    });
+  });
+
+  it("returns their orders newest first", async () => {
+    await withRolledBackApp(async (client) => {
+      const list = await readJson<CustomerList>(await client.get("/customers"));
+      const withOrders = list.data.find((customer) => customer.orderCount > 1)!;
+      const detail = await readJson<CustomerDetail>(
+        await client.get(`/customers/${withOrders.id}`),
+      );
+      const placed = detail.recentOrders.map((order) => order.placedAt);
+      expect(placed).toEqual(placed.toSorted().toReversed());
+    });
+  });
+
+  it("returns at most ten of them", async () => {
+    await withRolledBackApp(async (client) => {
+      const list = await readJson<CustomerList>(await client.get("/customers"));
+      const busiest = list.data.reduce((a, b) => (b.orderCount > a.orderCount ? b : a));
+      const detail = await readJson<CustomerDetail>(await client.get(`/customers/${busiest.id}`));
+      expect(detail.recentOrders.length).toBeLessThanOrEqual(10);
+    });
+  });
+
+  it("404s for a customer that does not exist", async () => {
+    await withRolledBackApp(async (client) => {
+      const response = await client.get("/customers/0f8fad5b-d9cb-469f-a165-70867728950e");
+      expect(response.status).toBe(404);
+    });
+  });
+
+  it("422s for an id that is not a uuid", async () => {
+    await withRolledBackApp(async (client) => {
+      expect((await client.get("/customers/not-a-uuid")).status).toBe(422);
     });
   });
 });

@@ -1,12 +1,7 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-zod";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
-import {
-  ORDER_ACTIONS,
-  ORDER_STATUSES,
-  type OrderAction,
-  type OrderStatus,
-} from "@odyssey/types";
+import { type OrderAction, type OrderStatus } from "@odyssey/types";
 import { customers, menuItems, orderEvents, orderItems, orders, settings } from "../db/schema.js";
 import { releaseDb, type Db } from "../db/client.js";
 import type { AppEnv } from "../env.js";
@@ -19,19 +14,13 @@ import {
   validationFailed,
 } from "../schemas/error.js";
 import { allowedActions, nextStatus } from "../domain/order-actions.js";
+import { orderRowColumns, toOrderRow } from "../domain/order-rows.js";
 import { pageWindow } from "../domain/pagination.js";
+import { OrderActionSchema, OrderRow, OrderStatusSchema } from "../schemas/order-row.js";
 
 /* -------------------------------------------------------------------------- */
 /* Shapes                                                                      */
 /* -------------------------------------------------------------------------- */
-
-const OrderStatusSchema = z.enum(ORDER_STATUSES).openapi("OrderStatus");
-const OrderActionSchema = z.enum(ORDER_ACTIONS).openapi("OrderAction");
-
-/** The list row carries only what a table cell renders. */
-const OrderRowCustomer = z
-  .object({ id: z.string().uuid(), name: z.string() })
-  .openapi("OrderRowCustomer");
 
 /** The drawer can reach a customer, so the detail read carries a phone. */
 const OrderDetailCustomer = z
@@ -52,25 +41,6 @@ const OrderItem = createSelectSchema(orderItems)
 const OrderTimelineEntry = z
   .object({ status: OrderStatusSchema, changedAt: z.string() })
   .openapi("OrderTimelineEntry");
-
-/**
- * `orderNumber` is an integer column and a string on the wire: it is a display
- * identifier, not a number to do arithmetic on. `placedAt` is likewise an ISO
- * string rather than the Date drizzle-zod would infer from the column.
- *
- * `channel` and `status` ARE derived from the table, which is the point — the
- * enum values reach the dashboard from the database and are never retyped.
- */
-const OrderRow = createSelectSchema(orders)
-  .pick({ id: true, channel: true, status: true, totalCents: true })
-  .extend({
-    orderNumber: z.string(),
-    customer: OrderRowCustomer.nullable(),
-    itemCount: z.number().int(),
-    placedAt: z.string(),
-    allowedActions: z.array(OrderActionSchema),
-  })
-  .openapi("OrderRow");
 
 const OrderDetail = createSelectSchema(orders)
   .pick({ id: true, channel: true, status: true, totalCents: true, kitchenNote: true })
@@ -283,19 +253,7 @@ export const orderRoutes = new OpenAPIHono<AppEnv>()
       const window = pageWindow(page, pageSize);
 
       const rows = await db
-        .select({
-          id: orders.id,
-          orderNumber: orders.orderNumber,
-          channel: orders.channel,
-          status: orders.status,
-          totalCents: orders.totalCents,
-          placedAt: orders.placedAt,
-          customerId: customers.id,
-          customerName: customers.name,
-          itemCount: sql<number>`(
-            select count(*) from ${orderItems} where ${orderItems.orderId} = ${orders.id}
-          )`.mapWith(Number),
-        })
+        .select(orderRowColumns)
         .from(orders)
         .leftJoin(customers, eq(orders.customerId, customers.id))
         .orderBy(sort === "placedAt.asc" ? asc(orders.placedAt) : desc(orders.placedAt))
@@ -306,19 +264,7 @@ export const orderRoutes = new OpenAPIHono<AppEnv>()
         .select({ total: sql<number>`count(*)`.mapWith(Number) })
         .from(orders);
 
-      const data = rows.map((row) => ({
-        id: row.id,
-        orderNumber: String(row.orderNumber),
-        channel: row.channel,
-        status: row.status,
-        totalCents: row.totalCents,
-        placedAt: row.placedAt.toISOString(),
-        itemCount: row.itemCount,
-        customer: row.customerId ? { id: row.customerId, name: row.customerName ?? "" } : null,
-        // On the row, not just the detail. Without it a list-level action button
-        // would have to re-derive the state machine on the client. See ADR-0003.
-        allowedActions: allowedActions(row.status),
-      }));
+      const data = rows.map(toOrderRow);
 
       /**
        * The total is counted independently of paging, never read off the
