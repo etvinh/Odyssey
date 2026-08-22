@@ -10,6 +10,7 @@ export * from "./Surface";
 export * from "./StatusBadge";
 export * from "./SegmentedControl";
 export * from "./DataTable";
+export * from "./Pagination";
 export * from "./inputs";
 export * from "./Select";
 export * from "./states";

@@ -157,6 +157,41 @@ describe("GET /customers", () => {
     });
   });
 
+  it("finds a customer by phone number", async () => {
+    // A restaurant looking up whoever is on the line searches the number, not
+    // the name they have not been told yet.
+    await withRolledBackApp(async (client) => {
+      const all = await readJson<CustomerList>(await client.get("/customers?pageSize=100"));
+      const target = all.data.find((row) => row.phone)!;
+      const found = await readJson<CustomerList>(
+        await client.get(`/customers?search=${encodeURIComponent(target.phone!)}`),
+      );
+      expect(found.data.map((row) => row.id)).toContain(target.id);
+    });
+  });
+
+  it("finds a customer by email", async () => {
+    await withRolledBackApp(async (client) => {
+      const all = await readJson<CustomerList>(await client.get("/customers?pageSize=100"));
+      const target = all.data.find((row) => row.email)!;
+      const found = await readJson<CustomerList>(
+        await client.get(`/customers?search=${encodeURIComponent(target.email!)}`),
+      );
+      expect(found.data.map((row) => row.id)).toContain(target.id);
+    });
+  });
+
+  it("narrows the total to the search, not just the page", async () => {
+    // The pagination footer reads this, so it must count matches rather than
+    // the rows this page happened to hold.
+    await withRolledBackApp(async (client) => {
+      const all = await readJson<CustomerList>(await client.get("/customers"));
+      const found = await readJson<CustomerList>(await client.get("/customers?search=zzzznomatch"));
+      expect(found.meta.total).toBe(0);
+      expect(all.meta.total).toBeGreaterThan(0);
+    });
+  });
+
   it("returns nothing when the search matches nothing", async () => {
     await withRolledBackApp(async (client) => {
       const body = await readJson<CustomerList>(await client.get("/customers?search=zzzznomatch"));

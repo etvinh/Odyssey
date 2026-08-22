@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-zod";
-import { asc, desc, eq, ilike, sql } from "drizzle-orm";
+import { asc, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { customers, orders } from "../db/schema.js";
 import { releaseDb, type Db } from "../db/client.js";
 import type { AppEnv } from "../env.js";
@@ -145,7 +145,21 @@ export const customerRoutes = new OpenAPIHono<AppEnv>().openapi(listCustomers, a
   const { db, sql: conn } = c.var.createDb(c.env.DATABASE_URL);
 
   try {
-    const filter = search ? ilike(customers.name, `%${search}%`) : undefined;
+    /**
+     * Name, phone or email — all three columns the table shows. A restaurant
+     * looking up whoever is on the line searches the number, not the name they
+     * have not been told yet.
+     *
+     * `ilike '%…%'` cannot use the lower(name) index, which is the accepted
+     * cost of substring search over a single restaurant's customer list.
+     */
+    const filter = search
+      ? or(
+          ilike(customers.name, `%${search}%`),
+          ilike(customers.phone, `%${search}%`),
+          ilike(customers.email, `%${search}%`),
+        )
+      : undefined;
 
     /**
      * One grouped query rather than a lookup per row: N+1 here would be 25

@@ -1,12 +1,13 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { View } from "react-native";
 import { usePathname, useRouter } from "expo-router";
-import { errorMessage, type Customer } from "@odyssey/api-client";
+import { errorMessage, useListCustomers, type Customer } from "@odyssey/api-client";
 import {
   DataTable,
   EmptyState,
   ErrorState,
   PageHeader,
+  Pagination,
   SearchField,
   SkeletonRows,
   Surface,
@@ -14,8 +15,10 @@ import {
   space,
 } from "@odyssey/ui";
 import { formatMoney, formatTime } from "../../format";
-import { filterCustomers } from "./filter";
-import { useAllCustomers } from "./useAllCustomers";
+import { useDebounced } from "../useDebounced";
+
+/** One screenful. The server caps a page at 100. */
+const PAGE_SIZE = 25;
 
 export function CustomersList() {
   const router = useRouter();
@@ -23,22 +26,30 @@ export function CustomersList() {
   // where that lives. Marking the row keeps the drawer anchored to its source.
   const openCustomerId = usePathname().split("/crm/")[1];
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
-  const query = useAllCustomers();
-  const customers = query.data;
+  /**
+   * Searched and paged on the server. The customer list is a comprehensive
+   * history of everyone who has ever ordered and only grows, so it is not a set
+   * the dashboard can hold in memory to filter — unlike the menu, which is
+   * bounded by what a kitchen can cook.
+   */
+  const settledSearch = useDebounced(search.trim());
 
-  const visible = useMemo(
-    () => (customers ? filterCustomers(customers, search) : undefined),
-    [customers, search],
-  );
+  const query = useListCustomers({
+    ...(settledSearch ? { search: settledSearch } : {}),
+    page,
+    pageSize: PAGE_SIZE,
+  });
+
+  const result = query.data?.status === 200 ? query.data.data : undefined;
+  const customers = result?.data;
 
   return (
     <View>
       <PageHeader
         title="Customers"
-        subtitle={
-          visible && customers ? `${visible.length} of ${customers.length} shown` : undefined
-        }
+        subtitle={result ? `${result.meta.total} in total` : undefined}
       />
 
       <View style={{ gap: space[4] }}>
@@ -46,7 +57,13 @@ export function CustomersList() {
           <View style={{ flex: 1 }} />
           <SearchField
             value={search}
-            onChangeText={setSearch}
+            // Back to page one on every edit: a narrower search can leave the
+            // current page past the end of the results, where there is nothing
+            // to show and no obvious way back.
+            onChangeText={(next) => {
+              setSearch(next);
+              setPage(1);
+            }}
             placeholder="Name, phone or email"
             width={280}
           />
@@ -60,10 +77,10 @@ export function CustomersList() {
           <Surface padded={false}>
             <ErrorState cause={errorMessage(query.error)} onRetry={() => void query.refetch()} />
           </Surface>
-        ) : visible ? (
+        ) : customers ? (
           <DataTable<Customer>
             caption="Customers"
-            rows={visible}
+            rows={customers}
             keyExtractor={(customer) => customer.id}
             selectedKey={openCustomerId}
             onRowPress={(customer) => router.push(`/crm/${customer.id}` as "/crm")}
@@ -138,6 +155,16 @@ export function CustomersList() {
                   ),
               },
             ]}
+          />
+        ) : null}
+
+        {result && result.meta.total > 0 ? (
+          <Pagination
+            page={result.meta.page}
+            pageSize={result.meta.pageSize}
+            total={result.meta.total}
+            onPageChange={setPage}
+            noun="customers"
           />
         ) : null}
       </View>
