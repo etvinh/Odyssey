@@ -2,7 +2,7 @@
 
 Every table in Odyssey, and the rules that live in the schema rather than in application code.
 
-This is the **source of truth for the whole contract**: Drizzle schema → drizzle-zod → Hono/OpenAPI → Orval. A shape that isn't here doesn't exist in the API. See `API.md` for how these become endpoints, and `CONTEXT.md` for what the terms mean.
+This is the **source of truth for the whole contract**: Drizzle schema → drizzle-zod → Hono/OpenAPI → Orval. A shape that isn't here doesn't exist in the API. See `API.md` for how these become endpoints, and `../CONTEXT.md` for what the terms mean.
 
 Postgres. All ids are `uuid` with `gen_random_uuid()` defaults. All money is `integer` cents. All timestamps are `timestamptz`.
 

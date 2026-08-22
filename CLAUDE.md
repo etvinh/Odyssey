@@ -1,9 +1,11 @@
 # Odyssey
 
 Restaurant ops app, built to the brief in `INSTRUCTIONS.md` — that file is the authority for stack,
-required pages, and deliverables. `PRODUCT.md` holds product truth and the explicit scope cuts.
-See `DATABASE.md` for the schema (the source every type derives from), `API.md` for the REST
-contract, and `COMPONENTS.md` for the UI inventory.
+required pages, and deliverables. `planning/PRODUCT.md` holds product truth and the explicit scope cuts.
+`CONTEXT.md` is the domain glossary and `docs/adr/` holds the architecture decisions.
+Planning artifacts — the schema sketch, REST contract and component inventory — live in
+`planning/`; they are design input, not the source of truth. The Drizzle schema, the
+generated OpenAPI document and the `/ui-library` route are.
 
 ## Agent skills
 

@@ -1,6 +1,6 @@
 # Component Inventory
 
-The design system is hand-built on React Native primitives — `View`, `Text`, `Pressable`, `TextInput`, `Modal`, `FlatList`, `ScrollView`, `Switch` — styled with `StyleSheet.create` over a typed token module. No third-party component library. See `docs/adr/0002-react-native-primitives.md`.
+The design system is hand-built on React Native primitives — `View`, `Text`, `Pressable`, `TextInput`, `Modal`, `FlatList`, `ScrollView`, `Switch` — styled with `StyleSheet.create` over a typed token module. No third-party component library. See `../docs/adr/0002-react-native-primitives.md`.
 
 Rendered to web through React Native Web, which is what turns `accessibilityRole` into real ARIA semantics and `Pressable`'s interaction state into hover/focus/active styling.
 
