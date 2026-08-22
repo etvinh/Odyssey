@@ -6,7 +6,7 @@ import { defineConfig } from "orval";
  */
 export default defineConfig({
   odyssey: {
-    input: "../../services/backend/dist/openapi.json",
+    input: "../../services/backend/openapi.json",
     output: {
       target: "./src/generated/odyssey.ts",
       schemas: "./src/generated/model",

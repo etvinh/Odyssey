@@ -40,7 +40,12 @@ export const menuRoutes = new OpenAPIHono<{ Bindings: Env }>().openapi(
         .orderBy(asc(menuCategories.sortOrder), asc(menuCategories.name));
 
       // itemCount is derived, never stored — menu_items lands in Stage 1.
-      const data = rows.map((r) => ({ ...r, itemCount: 0 }));
+      const data = rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        sortOrder: r.sortOrder,
+        itemCount: 0,
+      }));
 
       return c.json(
         { data, meta: { total: data.length, page: 1, pageSize: data.length } },

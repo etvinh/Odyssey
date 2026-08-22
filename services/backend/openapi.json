@@ -1,0 +1,103 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Odyssey API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8787"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "MenuCategoryList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MenuCategory"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ListMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "MenuCategory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647
+          },
+          "itemCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "sortOrder",
+          "itemCount"
+        ]
+      },
+      "ListMeta": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "pageSize"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/api/v1/menu/categories": {
+      "get": {
+        "operationId": "listMenuCategories",
+        "tags": [
+          "Menu"
+        ],
+        "responses": {
+          "200": {
+            "description": "Every menu category, ordered for display.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuCategoryList"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

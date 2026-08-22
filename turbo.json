@@ -2,14 +2,39 @@
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
     "gen:contract": {
-      "dependsOn": ["^gen:contract"],
-      "outputs": ["dist/**", "src/generated/**"],
+      "dependsOn": [
+        "^gen:contract"
+      ],
+      "outputs": [
+        "openapi.json",
+        "src/generated/**"
+      ],
       "cache": false
     },
-    "typecheck": { "dependsOn": ["gen:contract", "^typecheck"] },
+    "typecheck": {
+      "dependsOn": [
+        "gen:contract",
+        "^typecheck"
+      ]
+    },
     "lint": {},
-    "test": { "dependsOn": ["gen:contract"] },
-    "build": { "dependsOn": ["gen:contract", "^build"], "outputs": ["dist/**"] },
-    "dev": { "cache": false, "persistent": true }
+    "test": {
+      "dependsOn": [
+        "gen:contract"
+      ]
+    },
+    "build": {
+      "dependsOn": [
+        "gen:contract",
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
   }
 }

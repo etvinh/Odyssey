@@ -10,5 +10,5 @@ dist/
 
 # packages/api-client generated output is COMMITTED on purpose — see ADR-0004
 
-# wrangler local secrets — copy .dev.vars.example to .dev.vars
-.dev.vars
+# local secrets — copy services/backend/.env.example to .env
+.env

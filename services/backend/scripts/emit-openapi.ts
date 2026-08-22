@@ -1,4 +1,4 @@
-import { writeFile, mkdir } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { createApp } from "../src/app.js";
 
 const doc = createApp().getOpenAPI31Document({
@@ -7,6 +7,7 @@ const doc = createApp().getOpenAPI31Document({
   servers: [{ url: "http://localhost:8787" }],
 });
 
-await mkdir("./dist", { recursive: true });
-await writeFile("./dist/openapi.json", JSON.stringify(doc, null, 2));
+// Tracked in git, not a build artifact: the contract should be readable on
+// GitHub without cloning, same reasoning as the committed Orval output.
+await writeFile("./openapi.json", JSON.stringify(doc, null, 2) + "\n");
 console.log(`openapi.json written — ${Object.keys(doc.paths ?? {}).length} path(s)`);

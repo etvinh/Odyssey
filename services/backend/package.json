@@ -10,7 +10,6 @@
     "seed:reset": "tsx scripts/seed.ts --reset",
     "gen:contract": "tsx scripts/emit-openapi.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
