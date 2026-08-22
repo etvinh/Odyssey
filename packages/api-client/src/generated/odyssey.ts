@@ -23,6 +23,11 @@ import type {
   MenuCategoryList
 } from './model';
 
+import { apiFetch } from '../fetcher';
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
 export type listMenuCategoriesResponse200 = {
   data: MenuCategoryList
   status: 200
@@ -40,25 +45,19 @@ export const getListMenuCategoriesUrl = () => {
 
   
 
-  return `http://localhost:8787/api/v1/menu/categories`
+  return `/api/v1/menu/categories`
 }
 
 export const listMenuCategories = async ( options?: RequestInit): Promise<listMenuCategoriesResponse> => {
   
-  const res = await fetch(getListMenuCategoriesUrl(),
+  return apiFetch<listMenuCategoriesResponse>(getListMenuCategoriesUrl(),
   {      
     ...options,
     method: 'GET'
     
     
   }
-)
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-  
-  const data: listMenuCategoriesResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as listMenuCategoriesResponse
-}
+);}
 
 
 
@@ -66,21 +65,21 @@ export const listMenuCategories = async ( options?: RequestInit): Promise<listMe
 
 export const getListMenuCategoriesQueryKey = () => {
     return [
-    `http://localhost:8787/api/v1/menu/categories`
+    `/api/v1/menu/categories`
     ] as const;
     }
 
     
-export const getListMenuCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof listMenuCategories>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMenuCategories>>, TError, TData>>, fetch?: RequestInit}
+export const getListMenuCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof listMenuCategories>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMenuCategories>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getListMenuCategoriesQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMenuCategories>>> = ({ signal }) => listMenuCategories({ signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMenuCategories>>> = ({ signal }) => listMenuCategories({ signal, ...requestOptions });
 
       
 
@@ -100,7 +99,7 @@ export function useListMenuCategories<TData = Awaited<ReturnType<typeof listMenu
           TError,
           Awaited<ReturnType<typeof listMenuCategories>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListMenuCategories<TData = Awaited<ReturnType<typeof listMenuCategories>>, TError = unknown>(
@@ -110,16 +109,16 @@ export function useListMenuCategories<TData = Awaited<ReturnType<typeof listMenu
           TError,
           Awaited<ReturnType<typeof listMenuCategories>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListMenuCategories<TData = Awaited<ReturnType<typeof listMenuCategories>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMenuCategories>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMenuCategories>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
 export function useListMenuCategories<TData = Awaited<ReturnType<typeof listMenuCategories>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMenuCategories>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMenuCategories>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 

@@ -2,3 +2,4 @@
 // TS sources directly and does not perform the .js -> .ts mapping tsc does.
 export * from "./generated/odyssey";
 export * from "./generated/model";
+export * from "./fetcher";

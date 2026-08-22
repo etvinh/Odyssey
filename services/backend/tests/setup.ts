@@ -50,3 +50,19 @@ export type MenuCategory = {
   sortOrder: number;
   itemCount: number;
 };
+
+/** Only the parts of the OpenAPI document the contract tests assert on. */
+export type JsonSchema = {
+  type?: string;
+  format?: string;
+  properties?: Record<string, JsonSchema>;
+  required?: string[];
+};
+
+export type OpenApiDocument = {
+  openapi: string;
+  info: { title: string; version: string };
+  paths: Record<string, unknown>;
+  servers: { url: string }[];
+  components: { schemas: Record<string, JsonSchema> };
+};
