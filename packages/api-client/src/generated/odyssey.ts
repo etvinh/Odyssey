@@ -41,6 +41,7 @@ import type {
   OrderDetail,
   OrderList,
   Settings,
+  Summary,
   UpdateMenuCategoryBody,
   UpdateMenuItemBody,
   UpdateSettingsBody
@@ -1671,3 +1672,106 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
+    
+export type getSummaryResponse200 = {
+  data: Summary
+  status: 200
+}
+    
+export type getSummaryResponseSuccess = (getSummaryResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getSummaryResponse = (getSummaryResponseSuccess)
+
+export const getGetSummaryUrl = () => {
+
+
+  
+
+  return `/api/v1/summary`
+}
+
+export const getSummary = async ( options?: RequestInit): Promise<getSummaryResponse> => {
+  
+  return apiFetch<getSummaryResponse>(getGetSummaryUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getGetSummaryQueryKey = () => {
+    return [
+    `/api/v1/summary`
+    ] as const;
+    }
+
+    
+export const getGetSummaryQueryOptions = <TData = Awaited<ReturnType<typeof getSummary>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSummary>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSummaryQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSummary>>> = ({ signal }) => getSummary({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSummary>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getSummary>>>
+export type GetSummaryQueryError = unknown
+
+
+export function useGetSummary<TData = Awaited<ReturnType<typeof getSummary>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSummary>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSummary<TData = Awaited<ReturnType<typeof getSummary>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSummary>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSummary<TData = Awaited<ReturnType<typeof getSummary>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSummary>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetSummary<TData = Awaited<ReturnType<typeof getSummary>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSummary>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSummaryQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}

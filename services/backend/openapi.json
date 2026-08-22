@@ -799,6 +799,67 @@
             }
           }
         }
+      },
+      "Summary": {
+        "type": "object",
+        "properties": {
+          "today": {
+            "$ref": "#/components/schemas/DayFigures"
+          },
+          "yesterday": {
+            "$ref": "#/components/schemas/DayFigures"
+          },
+          "popularItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PopularItem"
+            }
+          }
+        },
+        "required": [
+          "today",
+          "yesterday",
+          "popularItems"
+        ]
+      },
+      "DayFigures": {
+        "type": "object",
+        "properties": {
+          "orderCount": {
+            "type": "integer"
+          },
+          "revenueCents": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "orderCount",
+          "revenueCents"
+        ]
+      },
+      "PopularItem": {
+        "type": "object",
+        "properties": {
+          "menuItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "orderCount": {
+            "type": "integer"
+          },
+          "shareOfOrders": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "menuItemId",
+          "name",
+          "orderCount",
+          "shareOfOrders"
+        ]
       }
     },
     "parameters": {}
@@ -1594,6 +1655,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/summary": {
+      "get": {
+        "operationId": "getSummary",
+        "tags": [
+          "Summary"
+        ],
+        "responses": {
+          "200": {
+            "description": "The state of the day: today against yesterday, and what is selling.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Summary"
                 }
               }
             }

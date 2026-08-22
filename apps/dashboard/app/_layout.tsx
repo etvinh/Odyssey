@@ -12,11 +12,9 @@ import { useGetSettings } from "@odyssey/api-client";
 import { serviceStatus } from "@odyssey/types";
 import { AppShell, ToastProvider, color, type NavItem } from "@odyssey/ui";
 
-/**
- * The five surfaces. Only Home is still to come; listing it here rather than
- * hiding it keeps the shell's shape honest about what the product is.
- */
+/** The five surfaces of the product, in the order a manager works through them. */
 const NAV: NavItem[] = [
+  { href: "/", label: "Home", icon: "home" },
   { href: "/orders", label: "Orders", icon: "clipboard" },
   { href: "/menu", label: "Menu", icon: "book" },
   { href: "/crm", label: "Customers", icon: "users" },

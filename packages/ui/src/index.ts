@@ -8,6 +8,8 @@ export * from "./Pressable";
 export * from "./Button";
 export * from "./Surface";
 export * from "./StatusBadge";
+export * from "./KpiStat";
+export * from "./ProgressBar";
 export * from "./SegmentedControl";
 export * from "./DataTable";
 export * from "./Pagination";
