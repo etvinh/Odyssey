@@ -1,17 +1,9 @@
 import type { OrderChannel, OrderStatus } from "@odyssey/types";
 
-/**
- * Display helpers for the orders screens.
- *
- * `formatMoney` belongs in packages/shared once that package exists — see
- * PRODUCT.md. It lives here until something outside orders needs it, rather
- * than standing up a package for one consumer.
- */
+// Re-exported so order screens keep one import for display helpers.
+export { formatMoney, formatTime } from "../../format";
 
-/** Integer cents to `$12.50`. Money is never a float in this codebase. */
-export function formatMoney(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
-}
+/** Order-specific display labels. Money and time live in ../../format. */
 
 const CHANNEL_LABELS: Record<OrderChannel, string> = {
   dine_in: "Dine in",
@@ -53,11 +45,3 @@ export function actionLabel(action: string): string {
   return ACTION_LABELS[action] ?? action;
 }
 
-export function formatTime(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}

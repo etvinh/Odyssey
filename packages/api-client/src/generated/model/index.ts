@@ -49,3 +49,4 @@ export * from './orderStatusCounts';
 export * from './orderTimelineEntry';
 export * from './updateMenuCategoryBody';
 export * from './updateMenuItemBody';
+export * from './updateMenuItemBodyDescription';

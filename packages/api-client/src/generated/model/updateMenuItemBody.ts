@@ -4,13 +4,14 @@
  * Odyssey API
  * OpenAPI spec version: 1.0.0
  */
+import type { UpdateMenuItemBodyDescription } from './updateMenuItemBodyDescription';
 
 export interface UpdateMenuItemBody {
   categoryId?: string;
   /** @minLength 1 */
   name?: string;
   /** @minLength 1 */
-  description?: string;
+  description?: UpdateMenuItemBodyDescription;
   /** @minimum 0 */
   priceCents?: number;
   isAvailable?: boolean;

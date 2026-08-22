@@ -422,3 +422,33 @@ describe("DELETE /menu/items/{id}", () => {
     });
   });
 });
+
+describe("PATCH /menu/items/{id} clearing a description", () => {
+  it("clears the description when sent null", async () => {
+    // The column is nullable, so an item that has a description must be able to
+    // lose it again — otherwise the edit form can add one but never remove it.
+    await withRolledBackApp(async (client) => {
+      const all = await readJson<ItemList>(await client.get("/menu/items"));
+      const created = await readJson<MenuItem>(
+        await client.post("/menu/items", {
+          categoryId: all.data[0]!.categoryId,
+          name: "描 probe",
+          description: "has one",
+          priceCents: 100,
+        }),
+      );
+      const cleared = await readJson<MenuItem>(
+        await client.patch(`/menu/items/${created.id}`, { description: null }),
+      );
+      expect(cleared.description).toBeNull();
+    });
+  });
+
+  it("still rejects an empty string, which is not the same as absent", async () => {
+    await withRolledBackApp(async (client) => {
+      const all = await readJson<ItemList>(await client.get("/menu/items"));
+      const response = await client.patch(`/menu/items/${all.data[0]!.id}`, { description: "" });
+      expect(response.status).toBe(422);
+    });
+  });
+});

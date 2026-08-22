@@ -40,8 +40,18 @@ const CreateMenuItemBody = z
   })
   .openapi("CreateMenuItemBody");
 
-/** Every field optional: the row's availability Switch sends only isAvailable. */
-const UpdateMenuItemBody = CreateMenuItemBody.partial().openapi("UpdateMenuItemBody");
+/**
+ * Every field optional: the row's availability Switch sends only isAvailable.
+ *
+ * `description` additionally accepts null, which clears it. The column is
+ * nullable, so an item that has a description has to be able to lose one —
+ * without this the edit form can add a description but never remove it. An
+ * empty string stays invalid: absent, blank and cleared should not be three
+ * ways of saying the same thing.
+ */
+const UpdateMenuItemBody = CreateMenuItemBody.partial()
+  .extend({ description: z.string().min(1).nullish() })
+  .openapi("UpdateMenuItemBody");
 
 const MenuItemIdParam = z.object({
   id: z.string().uuid().openapi({ param: { name: "id", in: "path" } }),
